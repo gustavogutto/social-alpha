@@ -44,3 +44,7 @@ settings.local.json
 # generated native folders
 /ios
 /android
+
+.vercel
+.env*
+!.env.example

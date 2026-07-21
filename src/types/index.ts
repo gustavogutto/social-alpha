@@ -12,9 +12,16 @@ export type Post = {
   author_id: string;
   content: string;
   media_urls: string[];
-  visibility: 'everyone' | 'group';
-  group_id: string | null;
   created_at: string;
+};
+
+export type PostFeedItem = Post & {
+  author_username: string;
+  author_display_name: string;
+  author_avatar_url: string | null;
+  like_count: number;
+  comment_count: number;
+  liked_by_me: boolean;
 };
 
 export type Comment = {
@@ -36,6 +43,7 @@ export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
   Main: undefined;
+  NewPost: undefined;
 };
 
 export type MainTabParamList = {

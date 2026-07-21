@@ -12,6 +12,7 @@ import StoriesScreen from '../screens/StoriesScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import NewPostScreen from '../screens/NewPostScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -47,7 +48,14 @@ export default function AppNavigator() {
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {session ? (
-          <RootStack.Screen name="Main" component={MainTabs} />
+          <>
+            <RootStack.Screen name="Main" component={MainTabs} />
+            <RootStack.Screen
+              name="NewPost"
+              component={NewPostScreen}
+              options={{ headerShown: true, title: 'Novo post', presentation: 'modal' }}
+            />
+          </>
         ) : (
           <>
             <RootStack.Screen name="Login" component={LoginScreen} />

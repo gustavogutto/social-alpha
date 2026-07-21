@@ -71,6 +71,27 @@ export type StoryGroup = {
   stories: ActiveStory[];
 };
 
+export type Message = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+};
+
+export type ConversationSummary = {
+  id: string;
+  is_group: boolean;
+  name: string | null;
+  created_at: string;
+  last_message: string | null;
+  last_message_at: string | null;
+};
+
+export type ConversationWithParticipants = ConversationSummary & {
+  otherParticipants: Profile[];
+};
+
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
@@ -79,6 +100,8 @@ export type RootStackParamList = {
   Groups: undefined;
   CreateGroup: undefined;
   StoryViewer: { group: StoryGroup };
+  Chat: { conversationId: string; title: string };
+  NewConversation: undefined;
 };
 
 export type MainTabParamList = {

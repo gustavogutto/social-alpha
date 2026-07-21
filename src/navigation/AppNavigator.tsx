@@ -16,6 +16,8 @@ import NewPostScreen from '../screens/NewPostScreen';
 import GroupsScreen from '../screens/GroupsScreen';
 import CreateGroupScreen from '../screens/CreateGroupScreen';
 import StoryViewerScreen from '../screens/StoryViewerScreen';
+import ChatScreen from '../screens/ChatScreen';
+import NewConversationScreen from '../screens/NewConversationScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -72,6 +74,12 @@ export default function AppNavigator() {
               name="StoryViewer"
               component={StoryViewerScreen}
               options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+            />
+            <RootStack.Screen name="Chat" component={ChatScreen} options={{ headerShown: true }} />
+            <RootStack.Screen
+              name="NewConversation"
+              component={NewConversationScreen}
+              options={{ headerShown: true, title: 'Nova conversa', presentation: 'modal' }}
             />
           </>
         ) : (

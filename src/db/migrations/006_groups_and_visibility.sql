@@ -1,5 +1,5 @@
 -- Phase 3: groups + post visibility scoping.
--- Run this in the Supabase SQL Editor.
+-- Run this in the Supabase SQL Editor. Safe to re-run (uses if-not-exists / drop-if-exists).
 
 create table if not exists public.groups (
   id uuid primary key default gen_random_uuid(),
@@ -8,8 +8,17 @@ create table if not exists public.groups (
   created_at timestamptz not null default now()
 );
 
-alter table public.groups enable row level security;
+create table if not exists public.group_members (
+  group_id uuid not null references public.groups(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  added_at timestamptz not null default now(),
+  primary key (group_id, user_id)
+);
 
+alter table public.groups enable row level security;
+alter table public.group_members enable row level security;
+
+drop policy if exists "members and creator can see a group" on public.groups;
 create policy "members and creator can see a group"
   on public.groups for select
   to authenticated
@@ -18,20 +27,13 @@ create policy "members and creator can see a group"
     or exists (select 1 from public.group_members gm where gm.group_id = id and gm.user_id = auth.uid())
   );
 
+drop policy if exists "users can create groups they own" on public.groups;
 create policy "users can create groups they own"
   on public.groups for insert
   to authenticated
   with check (auth.uid() = created_by);
 
-create table if not exists public.group_members (
-  group_id uuid not null references public.groups(id) on delete cascade,
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  added_at timestamptz not null default now(),
-  primary key (group_id, user_id)
-);
-
-alter table public.group_members enable row level security;
-
+drop policy if exists "members and the creator can see membership" on public.group_members;
 create policy "members and the creator can see membership"
   on public.group_members for select
   to authenticated
@@ -40,6 +42,7 @@ create policy "members and the creator can see membership"
     or exists (select 1 from public.groups g where g.id = group_id and g.created_by = auth.uid())
   );
 
+drop policy if exists "only the group creator can add members" on public.group_members;
 create policy "only the group creator can add members"
   on public.group_members for insert
   to authenticated
@@ -47,6 +50,7 @@ create policy "only the group creator can add members"
     exists (select 1 from public.groups g where g.id = group_id and g.created_by = auth.uid())
   );
 
+drop policy if exists "members can leave, creator can remove members" on public.group_members;
 create policy "members can leave, creator can remove members"
   on public.group_members for delete
   to authenticated
@@ -72,6 +76,7 @@ alter table public.posts add constraint posts_visibility_group_id_check
 
 -- Replace the old "everyone can read every post" policy with visibility-aware access.
 drop policy if exists "posts are readable by any authenticated member" on public.posts;
+drop policy if exists "posts are readable by everyone-scope or group members" on public.posts;
 create policy "posts are readable by everyone-scope or group members"
   on public.posts for select
   to authenticated
@@ -81,6 +86,7 @@ create policy "posts are readable by everyone-scope or group members"
   );
 
 drop policy if exists "users can create their own posts" on public.posts;
+drop policy if exists "users can create their own posts in scopes they belong to" on public.posts;
 create policy "users can create their own posts in scopes they belong to"
   on public.posts for insert
   to authenticated

@@ -29,7 +29,8 @@
         {
           "photosPermission": "O app usa suas fotos para você poder compartilhar posts e stories com seus amigos."
         }
-      ]
+      ],
+      "expo-video"
     ]
   }
 }

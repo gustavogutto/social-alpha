@@ -1,38 +1,11 @@
-import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
-import { decode } from 'base64-arraybuffer';
 import { supabase } from './supabase';
+import { uploadMedia } from './mediaUpload';
 import type { Comment, PostFeedItem } from '../types';
 
 export async function fetchFeed(): Promise<PostFeedItem[]> {
   const { data, error } = await supabase.from('post_feed').select('*');
   if (error) throw error;
   return data as PostFeedItem[];
-}
-
-async function uploadPostImage(userId: string, uri: string): Promise<string> {
-  const extMatch = uri.match(/\.(\w+)(?:\?.*)?$/);
-  const ext = extMatch ? extMatch[1] : 'jpg';
-  const path = `${userId}/${Date.now()}.${ext}`;
-  const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
-
-  let arrayBuffer: ArrayBuffer;
-  if (Platform.OS === 'web') {
-    const blob = await (await fetch(uri)).blob();
-    arrayBuffer = await blob.arrayBuffer();
-  } else {
-    const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-    arrayBuffer = decode(base64);
-  }
-
-  const { error } = await supabase.storage.from('post-media').upload(path, arrayBuffer, {
-    contentType,
-    upsert: false,
-  });
-  if (error) throw error;
-
-  const { data } = supabase.storage.from('post-media').getPublicUrl(path);
-  return data.publicUrl;
 }
 
 export async function createPost(params: {
@@ -44,7 +17,10 @@ export async function createPost(params: {
 }): Promise<void> {
   const { authorId, content, imageUris, visibility, groupId } = params;
 
-  const mediaUrls = await Promise.all(imageUris.map((uri) => uploadPostImage(authorId, uri)));
+  const uploads = await Promise.all(
+    imageUris.map((uri) => uploadMedia({ bucket: 'post-media', userId: authorId, uri }))
+  );
+  const mediaUrls = uploads.map((u) => u.url);
 
   const { error } = await supabase.from('posts').insert({
     author_id: authorId,

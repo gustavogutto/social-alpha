@@ -50,6 +50,27 @@ export type GroupMember = {
   added_at: string;
 };
 
+export type StoryMediaType = 'image' | 'video';
+
+export type ActiveStory = {
+  id: string;
+  author_id: string;
+  media_url: string;
+  media_type: StoryMediaType;
+  created_at: string;
+  expires_at: string;
+  author_username: string;
+  author_display_name: string;
+  author_avatar_url: string | null;
+};
+
+export type StoryGroup = {
+  authorId: string;
+  authorDisplayName: string;
+  authorAvatarUrl: string | null;
+  stories: ActiveStory[];
+};
+
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
@@ -57,6 +78,7 @@ export type RootStackParamList = {
   NewPost: undefined;
   Groups: undefined;
   CreateGroup: undefined;
+  StoryViewer: { group: StoryGroup };
 };
 
 export type MainTabParamList = {

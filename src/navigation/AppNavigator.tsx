@@ -15,6 +15,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import NewPostScreen from '../screens/NewPostScreen';
 import GroupsScreen from '../screens/GroupsScreen';
 import CreateGroupScreen from '../screens/CreateGroupScreen';
+import StoryViewerScreen from '../screens/StoryViewerScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -66,6 +67,11 @@ export default function AppNavigator() {
               name="CreateGroup"
               component={CreateGroupScreen}
               options={{ headerShown: true, title: 'Criar grupo' }}
+            />
+            <RootStack.Screen
+              name="StoryViewer"
+              component={StoryViewerScreen}
+              options={{ presentation: 'fullScreenModal', animation: 'fade' }}
             />
           </>
         ) : (

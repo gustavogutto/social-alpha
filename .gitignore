@@ -30,8 +30,13 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# local Claude Code settings
+settings.local.json
+
 # local env files
+.env
 .env*.local
+!.env.example
 
 # typescript
 *.tsbuildinfo

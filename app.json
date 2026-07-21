@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "SOCIAL",
-    "slug": "SOCIAL",
+    "slug": "social-alpha",
+    "scheme": "social",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,7 +20,16 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app usa suas fotos para você poder compartilhar posts e stories com seus amigos."
+        }
+      ]
+    ]
   }
 }

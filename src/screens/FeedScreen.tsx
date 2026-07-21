@@ -77,6 +77,11 @@ function PostCard({ post, currentUserId }: { post: PostFeedItem; currentUserId: 
           <Text style={styles.authorName}>{post.author_display_name}</Text>
           <Text style={styles.timestamp}>{new Date(post.created_at).toLocaleString()}</Text>
         </View>
+        {post.group_name ? (
+          <View style={styles.groupBadge}>
+            <Text style={styles.groupBadgeText}>{post.group_name}</Text>
+          </View>
+        ) : null}
       </View>
       {post.content ? <Text style={styles.content}>{post.content}</Text> : null}
       {post.media_urls.map((url) => (
@@ -188,6 +193,14 @@ const styles = StyleSheet.create({
   avatarPlaceholder: { backgroundColor: '#ccc' },
   authorName: { fontWeight: '700' },
   timestamp: { color: '#888', fontSize: 12 },
+  groupBadge: {
+    marginLeft: 'auto',
+    backgroundColor: '#e5e5e5',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  groupBadgeText: { fontSize: 12, color: '#444' },
   content: { fontSize: 15, marginBottom: 8 },
   postImage: { width: '100%', height: 220, borderRadius: 10, marginBottom: 8 },
   actionsRow: { flexDirection: 'row', gap: 20, marginTop: 4 },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../types';
+import type { Group, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createPost } from '../services/postService';
+import { fetchMyGroups } from '../services/groupService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewPost'>;
 
@@ -20,8 +21,14 @@ export default function NewPostScreen({ navigation }: Props) {
   const { session } = useAuth();
   const [content, setContent] = useState('');
   const [imageUris, setImageUris] = useState<string[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchMyGroups().then(setGroups).catch(() => {});
+  }, []);
 
   async function handlePickImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -47,7 +54,13 @@ export default function NewPostScreen({ navigation }: Props) {
     setError(null);
     setSubmitting(true);
     try {
-      await createPost({ authorId: session.user.id, content: content.trim(), imageUris });
+      await createPost({
+        authorId: session.user.id,
+        content: content.trim(),
+        imageUris,
+        visibility: selectedGroupId ? 'group' : 'everyone',
+        groupId: selectedGroupId,
+      });
       navigation.goBack();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível publicar.');
@@ -73,6 +86,30 @@ export default function NewPostScreen({ navigation }: Props) {
           <Text style={styles.addImageText}>+ Foto</Text>
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.sectionLabel}>Quem pode ver</Text>
+      <View style={styles.visibilityRow}>
+        <TouchableOpacity
+          style={[styles.chip, selectedGroupId === null && styles.chipActive]}
+          onPress={() => setSelectedGroupId(null)}
+        >
+          <Text style={selectedGroupId === null ? styles.chipTextActive : styles.chipText}>
+            Todo mundo
+          </Text>
+        </TouchableOpacity>
+        {groups.map((group) => (
+          <TouchableOpacity
+            key={group.id}
+            style={[styles.chip, selectedGroupId === group.id && styles.chipActive]}
+            onPress={() => setSelectedGroupId(group.id)}
+          >
+            <Text style={selectedGroupId === group.id ? styles.chipTextActive : styles.chipText}>
+              {group.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>
         <Text style={styles.buttonText}>{submitting ? 'Publicando...' : 'Publicar'}</Text>
@@ -105,6 +142,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addImageText: { fontSize: 12, color: '#666' },
+  sectionLabel: { marginTop: 20, marginBottom: 8, fontWeight: '600', color: '#444' },
+  visibilityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  chipActive: { backgroundColor: '#1a1a1a', borderColor: '#1a1a1a' },
+  chipText: { color: '#444' },
+  chipTextActive: { color: '#fff' },
   button: {
     backgroundColor: '#1a1a1a',
     borderRadius: 10,

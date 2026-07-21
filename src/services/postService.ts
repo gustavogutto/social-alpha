@@ -39,8 +39,10 @@ export async function createPost(params: {
   authorId: string;
   content: string;
   imageUris: string[];
+  visibility: 'everyone' | 'group';
+  groupId: string | null;
 }): Promise<void> {
-  const { authorId, content, imageUris } = params;
+  const { authorId, content, imageUris, visibility, groupId } = params;
 
   const mediaUrls = await Promise.all(imageUris.map((uri) => uploadPostImage(authorId, uri)));
 
@@ -48,6 +50,8 @@ export async function createPost(params: {
     author_id: authorId,
     content,
     media_urls: mediaUrls,
+    visibility,
+    group_id: groupId,
   });
   if (error) throw error;
 }

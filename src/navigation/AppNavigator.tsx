@@ -13,6 +13,8 @@ import MessagesScreen from '../screens/MessagesScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import NewPostScreen from '../screens/NewPostScreen';
+import GroupsScreen from '../screens/GroupsScreen';
+import CreateGroupScreen from '../screens/CreateGroupScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -54,6 +56,16 @@ export default function AppNavigator() {
               name="NewPost"
               component={NewPostScreen}
               options={{ headerShown: true, title: 'Novo post', presentation: 'modal' }}
+            />
+            <RootStack.Screen
+              name="Groups"
+              component={GroupsScreen}
+              options={{ headerShown: true, title: 'Meus grupos' }}
+            />
+            <RootStack.Screen
+              name="CreateGroup"
+              component={CreateGroupScreen}
+              options={{ headerShown: true, title: 'Criar grupo' }}
             />
           </>
         ) : (

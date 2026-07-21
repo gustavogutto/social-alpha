@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type Profile = {
   id: string;
   username: string;
@@ -92,10 +94,26 @@ export type ConversationWithParticipants = ConversationSummary & {
   otherParticipants: Profile[];
 };
 
+export type NotificationType = 'like' | 'comment' | 'message' | 'group_invite';
+
+export type NotificationFeedItem = {
+  id: string;
+  type: NotificationType;
+  read: boolean;
+  created_at: string;
+  post_id: string | null;
+  comment_id: string | null;
+  conversation_id: string | null;
+  group_id: string | null;
+  actor_username: string;
+  actor_display_name: string;
+  actor_avatar_url: string | null;
+};
+
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabParamList> | undefined;
   NewPost: undefined;
   Groups: undefined;
   CreateGroup: undefined;

@@ -99,7 +99,10 @@ create policy "users can create their own posts in scopes they belong to"
   );
 
 -- Refresh the feed view to include visibility/group info.
-create or replace view public.post_feed
+-- (drop first: CREATE OR REPLACE VIEW can only append columns at the end, and this
+-- reorders them, which Postgres rejects with "cannot change name of view column")
+drop view if exists public.post_feed;
+create view public.post_feed
   with (security_invoker = true)
   as
   select

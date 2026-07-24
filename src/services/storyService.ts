@@ -28,9 +28,10 @@ export async function createStory(params: {
   authorId: string;
   uri: string;
   mediaType: StoryMediaType;
+  mimeType?: string | null;
 }): Promise<void> {
-  const { authorId, uri, mediaType } = params;
-  const { url } = await uploadMedia({ bucket: 'story-media', userId: authorId, uri });
+  const { authorId, uri, mediaType, mimeType } = params;
+  const { url } = await uploadMedia({ bucket: 'story-media', userId: authorId, uri, mimeType });
 
   const { error } = await supabase.from('stories').insert({
     author_id: authorId,

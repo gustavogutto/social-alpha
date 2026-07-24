@@ -31,7 +31,10 @@ export async function createGroup(params: {
   const { error: membersError } = await supabase.from('group_members').insert(
     uniqueMemberIds.map((userId) => ({ group_id: group.id, user_id: userId }))
   );
-  if (membersError) throw membersError;
+  if (membersError) {
+    await supabase.from('groups').delete().eq('id', group.id);
+    throw membersError;
+  }
 
   return group as Group;
 }

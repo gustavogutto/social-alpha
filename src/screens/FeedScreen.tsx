@@ -30,6 +30,14 @@ function PostCard({ post, currentUserId }: { post: PostFeedItem; currentUserId: 
   const [commentCount, setCommentCount] = useState(post.comment_count);
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [sendingComment, setSendingComment] = useState(false);
+
+  useEffect(() => {
+    setLikedState(post.liked_by_me);
+    setLikeCount(post.like_count);
+    setCommentCount(post.comment_count);
+  }, [post.liked_by_me, post.like_count, post.comment_count]);
 
   async function handleToggleLike() {
     const next = !liked;
@@ -59,10 +67,18 @@ function PostCard({ post, currentUserId }: { post: PostFeedItem; currentUserId: 
   async function handleAddComment() {
     const text = newComment.trim();
     if (!text) return;
-    setNewComment('');
-    const comment = await addComment(post.id, currentUserId, text);
-    setComments((prev) => [...prev, comment]);
-    setCommentCount((c) => c + 1);
+    setCommentError(null);
+    setSendingComment(true);
+    try {
+      const comment = await addComment(post.id, currentUserId, text);
+      setComments((prev) => [...prev, comment]);
+      setCommentCount((c) => c + 1);
+      setNewComment('');
+    } catch (e) {
+      setCommentError(e instanceof Error ? e.message : 'Não foi possível comentar.');
+    } finally {
+      setSendingComment(false);
+    }
   }
 
   return (
@@ -108,6 +124,7 @@ function PostCard({ post, currentUserId }: { post: PostFeedItem; currentUserId: 
               </Text>
             ))
           )}
+          {commentError ? <Text style={styles.errorText}>{commentError}</Text> : null}
           <View style={styles.commentInputRow}>
             <TextInput
               style={styles.commentInput}
@@ -115,9 +132,10 @@ function PostCard({ post, currentUserId }: { post: PostFeedItem; currentUserId: 
               value={newComment}
               onChangeText={setNewComment}
               onSubmitEditing={handleAddComment}
+              editable={!sendingComment}
             />
-            <TouchableOpacity onPress={handleAddComment}>
-              <Text style={styles.sendComment}>Enviar</Text>
+            <TouchableOpacity onPress={handleAddComment} disabled={sendingComment}>
+              <Text style={styles.sendComment}>{sendingComment ? '...' : 'Enviar'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -131,6 +149,7 @@ export default function FeedScreen({ navigation }: Props) {
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const data = await fetchFeed();
@@ -138,13 +157,22 @@ export default function FeedScreen({ navigation }: Props) {
   }, []);
 
   useEffect(() => {
-    load().finally(() => setLoading(false));
+    load()
+      .then(() => setError(null))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar o feed.'))
+      .finally(() => setLoading(false));
   }, [load]);
 
   async function handleRefresh() {
     setRefreshing(true);
-    await load();
-    setRefreshing(false);
+    try {
+      await load();
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível atualizar o feed.');
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   if (loading) {
@@ -159,6 +187,11 @@ export default function FeedScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1 }}>
+      {error && posts.length > 0 ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{error}</Text>
+        </View>
+      ) : null}
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -166,9 +199,18 @@ export default function FeedScreen({ navigation }: Props) {
         renderItem={({ item }) => <PostCard post={item} currentUserId={session.user.id} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>Nenhum post ainda. Seja o primeiro!</Text>
-          </View>
+          error ? (
+            <View style={styles.centered}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity onPress={handleRefresh}>
+                <Text style={styles.retryText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>Nenhum post ainda. Seja o primeiro!</Text>
+            </View>
+          )
         }
       />
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('NewPost')}>
@@ -181,6 +223,10 @@ export default function FeedScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: '#666', textAlign: 'center' },
+  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  retryText: { color: '#1a1a1a', fontWeight: '600' },
+  errorBanner: { backgroundColor: '#fdecea', padding: 10 },
+  errorBannerText: { color: '#c0392b', textAlign: 'center', fontSize: 13 },
   list: { padding: 12, flexGrow: 1 },
   card: {
     backgroundColor: '#f7f7f7',

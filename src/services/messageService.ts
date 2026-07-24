@@ -34,35 +34,51 @@ export async function fetchConversations(userId: string): Promise<ConversationWi
   }));
 }
 
+const UNIQUE_VIOLATION = '23505';
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function findOrCreateDirectConversation(
   currentUserId: string,
   otherUserId: string
 ): Promise<string> {
-  const { data: mine, error: mineError } = await supabase
-    .from('conversation_participants')
-    .select('conversation_id, conversations!inner(is_group)')
-    .eq('user_id', currentUserId)
-    .eq('conversations.is_group', false);
-  if (mineError) throw mineError;
+  // Deterministic per unordered pair - backed by a DB unique index (see migration 010),
+  // so two concurrent calls for the same pair can never create two conversations.
+  const dmKey = [currentUserId, otherUserId].sort().join(':');
 
-  const myConversationIds = (mine as unknown as { conversation_id: string }[]).map((r) => r.conversation_id);
-
-  if (myConversationIds.length > 0) {
-    const { data: shared, error: sharedError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', otherUserId)
-      .in('conversation_id', myConversationIds);
-    if (sharedError) throw sharedError;
-    if (shared.length > 0) return shared[0].conversation_id;
-  }
+  const { data: existing, error: existingError } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('dm_key', dmKey)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) return existing.id as string;
 
   const { data: conversation, error: convError } = await supabase
     .from('conversations')
-    .insert({ is_group: false, created_by: currentUserId })
+    .insert({ is_group: false, created_by: currentUserId, dm_key: dmKey })
     .select('*')
     .single();
-  if (convError) throw convError;
+
+  if (convError) {
+    if (convError.code !== UNIQUE_VIOLATION) throw convError;
+
+    // Lost the race - another request just created this pair's conversation.
+    // Its participant rows may not have committed yet, so retry the lookup briefly.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await sleep(150);
+      const { data: winner, error: winnerError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('dm_key', dmKey)
+        .maybeSingle();
+      if (winnerError) throw winnerError;
+      if (winner) return winner.id as string;
+    }
+    throw convError;
+  }
 
   const { error: participantsError } = await supabase.from('conversation_participants').insert([
     { conversation_id: conversation.id, user_id: currentUserId },
@@ -91,7 +107,10 @@ export async function createGroupConversation(params: {
   const { error: participantsError } = await supabase.from('conversation_participants').insert(
     uniqueMemberIds.map((userId) => ({ conversation_id: conversation.id, user_id: userId }))
   );
-  if (participantsError) throw participantsError;
+  if (participantsError) {
+    await supabase.from('conversations').delete().eq('id', conversation.id);
+    throw participantsError;
+  }
 
   return conversation.id as string;
 }

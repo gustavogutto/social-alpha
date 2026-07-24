@@ -26,16 +26,23 @@ export default function StoriesScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<StoryGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setGroups(await fetchActiveStories());
   }, []);
 
+  const reload = useCallback(() => {
+    return load()
+      .then(() => setError(null))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar os stories.'));
+  }, [load]);
+
   useEffect(() => {
-    load().finally(() => setLoading(false));
-    const unsubscribe = navigation.addListener('focus', load);
+    reload().finally(() => setLoading(false));
+    const unsubscribe = navigation.addListener('focus', reload);
     return unsubscribe;
-  }, [load, navigation]);
+  }, [reload, navigation]);
 
   async function handleAddStory() {
     if (!session?.user) return;
@@ -48,14 +55,18 @@ export default function StoriesScreen({ navigation }: Props) {
     if (result.canceled || result.assets.length === 0) return;
 
     setPosting(true);
+    setError(null);
     try {
       const asset = result.assets[0];
       await createStory({
         authorId: session.user.id,
         uri: asset.uri,
         mediaType: asset.type === 'video' ? 'video' : 'image',
+        mimeType: asset.mimeType,
       });
       await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível publicar o story.');
     } finally {
       setPosting(false);
     }
@@ -118,10 +129,19 @@ export default function StoriesScreen({ navigation }: Props) {
         ))}
       </ScrollView>
 
-      {groups.length === 0 && (
+      {error ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>Nenhum story nas últimas 24h. Seja o primeiro!</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={reload}>
+            <Text style={styles.retryText}>Tentar novamente</Text>
+          </TouchableOpacity>
         </View>
+      ) : (
+        groups.length === 0 && (
+          <View style={styles.centered}>
+            <Text style={styles.emptyText}>Nenhum story nas últimas 24h. Seja o primeiro!</Text>
+          </View>
+        )
       )}
     </View>
   );
@@ -130,6 +150,8 @@ export default function StoriesScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: '#666', textAlign: 'center' },
+  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  retryText: { color: '#1a1a1a', fontWeight: '600' },
   row: { flexDirection: 'row', padding: 16, gap: 16 },
   bubbleWrap: { alignItems: 'center', width: 68 },
   bubble: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: '#1a1a1a' },

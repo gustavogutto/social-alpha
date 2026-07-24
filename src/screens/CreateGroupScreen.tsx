@@ -17,7 +17,9 @@ export default function CreateGroupScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (session?.user) {
-      fetchOtherProfiles(session.user.id).then(setProfiles).catch(() => {});
+      fetchOtherProfiles(session.user.id)
+        .then(setProfiles)
+        .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar as pessoas.'));
     }
   }, [session?.user]);
 
@@ -73,7 +75,11 @@ export default function CreateGroupScreen({ navigation }: Props) {
             </TouchableOpacity>
           );
         }}
-        ListEmptyComponent={<Text style={styles.emptyText}>Ninguém mais cadastrado ainda.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {error ? error : 'Ninguém mais cadastrado ainda.'}
+          </Text>
+        }
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={submitting}>

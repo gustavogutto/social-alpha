@@ -9,16 +9,23 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Groups'>;
 export default function GroupsScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setGroups(await fetchMyGroups());
   }, []);
 
+  const reload = useCallback(() => {
+    return load()
+      .then(() => setError(null))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar os grupos.'));
+  }, [load]);
+
   useEffect(() => {
-    load().finally(() => setLoading(false));
-    const unsubscribe = navigation.addListener('focus', load);
+    reload().finally(() => setLoading(false));
+    const unsubscribe = navigation.addListener('focus', reload);
     return unsubscribe;
-  }, [load, navigation]);
+  }, [reload, navigation]);
 
   return (
     <View style={styles.container}>
@@ -32,9 +39,16 @@ export default function GroupsScreen({ navigation }: Props) {
           </View>
         )}
         ListEmptyComponent={
-          !loading ? (
+          loading ? null : error ? (
+            <View style={styles.centered}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity onPress={reload}>
+                <Text style={styles.retryText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <Text style={styles.emptyText}>Você ainda não faz parte de nenhum grupo.</Text>
-          ) : null
+          )
         }
       />
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('CreateGroup')}>
@@ -46,6 +60,9 @@ export default function GroupsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  centered: { alignItems: 'center', justifyContent: 'center', marginTop: 32 },
+  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  retryText: { color: '#1a1a1a', fontWeight: '600' },
   list: { flexGrow: 1 },
   groupRow: {
     backgroundColor: '#f7f7f7',

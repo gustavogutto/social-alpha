@@ -20,14 +20,16 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NewPost'>;
 export default function NewPostScreen({ navigation }: Props) {
   const { session } = useAuth();
   const [content, setContent] = useState('');
-  const [imageUris, setImageUris] = useState<string[]>([]);
+  const [images, setImages] = useState<{ uri: string; mimeType?: string | null }[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchMyGroups().then(setGroups).catch(() => {});
+    fetchMyGroups()
+      .then(setGroups)
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar os grupos.'));
   }, []);
 
   async function handlePickImage() {
@@ -41,13 +43,14 @@ export default function NewPostScreen({ navigation }: Props) {
       quality: 0.8,
     });
     if (!result.canceled && result.assets.length > 0) {
-      setImageUris((prev) => [...prev, result.assets[0].uri]);
+      const asset = result.assets[0];
+      setImages((prev) => [...prev, { uri: asset.uri, mimeType: asset.mimeType }]);
     }
   }
 
   async function handleSubmit() {
     if (!session?.user) return;
-    if (!content.trim() && imageUris.length === 0) {
+    if (!content.trim() && images.length === 0) {
       setError('Escreva algo ou adicione uma foto.');
       return;
     }
@@ -57,7 +60,7 @@ export default function NewPostScreen({ navigation }: Props) {
       await createPost({
         authorId: session.user.id,
         content: content.trim(),
-        imageUris,
+        images,
         visibility: selectedGroupId ? 'group' : 'everyone',
         groupId: selectedGroupId,
       });
@@ -79,7 +82,7 @@ export default function NewPostScreen({ navigation }: Props) {
         onChangeText={setContent}
       />
       <View style={styles.imageRow}>
-        {imageUris.map((uri) => (
+        {images.map(({ uri }) => (
           <Image key={uri} source={{ uri }} style={styles.thumbnail} />
         ))}
         <TouchableOpacity style={styles.addImageButton} onPress={handlePickImage}>

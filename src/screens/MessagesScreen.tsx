@@ -21,17 +21,24 @@ export default function MessagesScreen({ navigation }: Props) {
   const { session } = useAuth();
   const [conversations, setConversations] = useState<ConversationWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session?.user) return;
     setConversations(await fetchConversations(session.user.id));
   }, [session?.user]);
 
+  const reload = useCallback(() => {
+    return load()
+      .then(() => setError(null))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar as conversas.'));
+  }, [load]);
+
   useEffect(() => {
-    load().finally(() => setLoading(false));
-    const unsubscribe = navigation.addListener('focus', load);
+    reload().finally(() => setLoading(false));
+    const unsubscribe = navigation.addListener('focus', reload);
     return unsubscribe;
-  }, [load, navigation]);
+  }, [reload, navigation]);
 
   if (loading) {
     return (
@@ -65,9 +72,18 @@ export default function MessagesScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>Nenhuma conversa ainda.</Text>
-          </View>
+          error ? (
+            <View style={styles.centered}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity onPress={reload}>
+                <Text style={styles.retryText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>Nenhuma conversa ainda.</Text>
+            </View>
+          )
         }
       />
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('NewConversation')}>
@@ -80,6 +96,8 @@ export default function MessagesScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: '#666', textAlign: 'center' },
+  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  retryText: { color: '#1a1a1a', fontWeight: '600' },
   list: { flexGrow: 1, padding: 12 },
   row: {
     backgroundColor: '#f7f7f7',

@@ -29,23 +29,30 @@ export default function NotificationsScreen({ navigation }: Props) {
   const { session } = useAuth();
   const [items, setItems] = useState<NotificationFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setItems(await fetchNotifications());
   }, []);
 
+  const reload = useCallback(() => {
+    return load()
+      .then(() => setError(null))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar as notificações.'));
+  }, [load]);
+
   useEffect(() => {
-    load().finally(() => setLoading(false));
-    const unsubscribeFocus = navigation.addListener('focus', load);
+    reload().finally(() => setLoading(false));
+    const unsubscribeFocus = navigation.addListener('focus', reload);
     let unsubscribeRealtime = () => {};
     if (session?.user) {
-      unsubscribeRealtime = subscribeToNotifications(session.user.id, load);
+      unsubscribeRealtime = subscribeToNotifications(session.user.id, reload);
     }
     return () => {
       unsubscribeFocus();
       unsubscribeRealtime();
     };
-  }, [load, navigation, session?.user]);
+  }, [reload, navigation, session?.user]);
 
   async function handlePress(item: NotificationFeedItem) {
     if (!item.read) {
@@ -96,9 +103,18 @@ export default function NotificationsScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={styles.emptyText}>Nenhuma notificação ainda.</Text>
-          </View>
+          error ? (
+            <View style={styles.centered}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity onPress={reload}>
+                <Text style={styles.retryText}>Tentar novamente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>Nenhuma notificação ainda.</Text>
+            </View>
+          )
         }
       />
     </View>
@@ -108,6 +124,8 @@ export default function NotificationsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: '#666', textAlign: 'center' },
+  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  retryText: { color: '#1a1a1a', fontWeight: '600' },
   list: { flexGrow: 1, padding: 12 },
   markAllButton: { alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 12 },
   markAllText: { color: '#1a1a1a', fontWeight: '600' },

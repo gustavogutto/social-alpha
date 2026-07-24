@@ -11,14 +11,14 @@ export async function fetchFeed(): Promise<PostFeedItem[]> {
 export async function createPost(params: {
   authorId: string;
   content: string;
-  imageUris: string[];
+  images: { uri: string; mimeType?: string | null }[];
   visibility: 'everyone' | 'group';
   groupId: string | null;
 }): Promise<void> {
-  const { authorId, content, imageUris, visibility, groupId } = params;
+  const { authorId, content, images, visibility, groupId } = params;
 
   const uploads = await Promise.all(
-    imageUris.map((uri) => uploadMedia({ bucket: 'post-media', userId: authorId, uri }))
+    images.map(({ uri, mimeType }) => uploadMedia({ bucket: 'post-media', userId: authorId, uri, mimeType }))
   );
   const mediaUrls = uploads.map((u) => u.url);
 

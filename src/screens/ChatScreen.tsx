@@ -21,6 +21,9 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
@@ -28,7 +31,12 @@ export default function ChatScreen({ route, navigation }: Props) {
   }, [navigation, title]);
 
   useEffect(() => {
-    fetchMessages(conversationId).then(setMessages);
+    fetchMessages(conversationId)
+      .then((data) => {
+        setMessages(data);
+        setLoadError(null);
+      })
+      .catch((e) => setLoadError(e instanceof Error ? e.message : 'Não foi possível carregar as mensagens.'));
 
     const unsubscribe = subscribeToMessages(conversationId, (message) => {
       setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
@@ -39,9 +47,17 @@ export default function ChatScreen({ route, navigation }: Props) {
   async function handleSend() {
     const content = text.trim();
     if (!content || !session?.user) return;
-    setText('');
-    const message = await sendMessage(conversationId, session.user.id, content);
-    setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+    setSendError(null);
+    setSending(true);
+    try {
+      const message = await sendMessage(conversationId, session.user.id, content);
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+      setText('');
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : 'Não foi possível enviar a mensagem.');
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -50,6 +66,11 @@ export default function ChatScreen({ route, navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
+      {loadError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{loadError}</Text>
+        </View>
+      ) : null}
       <FlatList
         ref={listRef}
         data={messages}
@@ -65,6 +86,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           );
         }}
       />
+      {sendError ? <Text style={styles.sendErrorText}>{sendError}</Text> : null}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
@@ -72,9 +94,10 @@ export default function ChatScreen({ route, navigation }: Props) {
           value={text}
           onChangeText={setText}
           onSubmitEditing={handleSend}
+          editable={!sending}
         />
-        <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>Enviar</Text>
+        <TouchableOpacity onPress={handleSend} style={styles.sendButton} disabled={sending}>
+          <Text style={styles.sendButtonText}>{sending ? '...' : 'Enviar'}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -106,4 +129,7 @@ const styles = StyleSheet.create({
   },
   sendButton: { paddingHorizontal: 12 },
   sendButtonText: { color: '#1a1a1a', fontWeight: '700' },
+  errorBanner: { backgroundColor: '#fdecea', padding: 10 },
+  errorBannerText: { color: '#c0392b', textAlign: 'center', fontSize: 13 },
+  sendErrorText: { color: '#c0392b', textAlign: 'center', fontSize: 13, paddingTop: 6 },
 });

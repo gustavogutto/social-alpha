@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ConversationWithParticipants, MainTabParamList, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchConversations } from '../services/messageService';
+import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Messages'>,
@@ -49,7 +50,7 @@ export default function MessagesScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
@@ -95,19 +96,19 @@ export default function MessagesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#666', textAlign: 'center' },
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
-  retryText: { color: '#1a1a1a', fontWeight: '600' },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
+  retryText: { color: colors.accent, fontWeight: '600' },
   list: { flexGrow: 1, padding: 12 },
   row: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: colors.card,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
   },
-  title: { fontSize: 16, fontWeight: '700' },
-  preview: { color: '#666', marginTop: 4 },
-  previewEmpty: { color: '#999', marginTop: 4, fontStyle: 'italic' },
+  title: { fontSize: 16, fontWeight: '700', color: colors.text },
+  preview: { color: colors.textMuted, marginTop: 4 },
+  previewEmpty: { color: colors.textMuted, marginTop: 4, fontStyle: 'italic' },
   fab: {
     position: 'absolute',
     right: 20,
@@ -115,9 +116,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 28 },
+  fabText: { color: colors.onAccent, fontSize: 28, lineHeight: 28 },
 });

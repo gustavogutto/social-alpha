@@ -20,13 +20,21 @@ import ChatScreen from '../screens/ChatScreen';
 import NewConversationScreen from '../screens/NewConversationScreen';
 import FriendsScreen from '../screens/FriendsScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
+import { colors } from '../theme/colors';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
+      }}
+    >
       <Tab.Screen name="Feed" component={FeedScreen} />
       <Tab.Screen name="Stories" component={StoriesScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} options={{ title: 'Mensagens' }} />
@@ -53,7 +61,14 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator
+        screenOptions={{
+          headerShown: false,
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+          headerTitleStyle: { color: colors.text },
+        }}
+      >
         {session ? (
           <>
             <RootStack.Screen name="Main" component={MainTabs} />

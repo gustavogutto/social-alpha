@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createGroup, fetchOtherProfiles } from '../services/groupService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateGroup'>;
 
@@ -90,41 +91,43 @@ export default function CreateGroupScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flex: 1, backgroundColor: colors.shell, padding: 16 },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
     marginBottom: 16,
+    backgroundColor: colors.card,
+    color: colors.text,
   },
-  sectionLabel: { fontWeight: '600', color: '#444', marginBottom: 8 },
+  sectionLabel: { fontWeight: '600', color: colors.textMuted, marginBottom: 8 },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  memberName: { fontSize: 15 },
+  memberName: { fontSize: 15, color: colors.text },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
   },
-  checkboxChecked: { backgroundColor: '#1a1a1a', borderColor: '#1a1a1a' },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 16 },
+  checkboxChecked: { backgroundColor: colors.accent, borderColor: colors.accent },
+  emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: 16 },
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
     marginTop: 16,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#c0392b', marginTop: 12, textAlign: 'center' },
+  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
+  error: { color: colors.danger, marginTop: 12, textAlign: 'center' },
 });

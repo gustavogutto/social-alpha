@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, NotificationFeedItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchNotifications, markAllAsRead, markAsRead, subscribeToNotifications } from '../services/notificationService';
+import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Notifications'>,
@@ -89,7 +90,7 @@ export default function NotificationsScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
       {items.some((i) => !i.read) && (
         <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
           <Text style={styles.markAllText}>Marcar tudo como lido</Text>
@@ -129,19 +130,19 @@ export default function NotificationsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#666', textAlign: 'center' },
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
-  retryText: { color: '#1a1a1a', fontWeight: '600' },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
+  retryText: { color: colors.accent, fontWeight: '600' },
   list: { flexGrow: 1, padding: 12 },
   markAllButton: { alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 12 },
-  markAllText: { color: '#1a1a1a', fontWeight: '600' },
+  markAllText: { color: colors.accent, fontWeight: '600' },
   row: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: colors.card,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
   },
-  rowUnread: { backgroundColor: '#eef4ff' },
-  text: { fontSize: 15 },
-  timestamp: { color: '#888', fontSize: 12, marginTop: 4 },
+  rowUnread: { backgroundColor: colors.accentSoft },
+  text: { fontSize: 15, color: colors.text },
+  timestamp: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
 });

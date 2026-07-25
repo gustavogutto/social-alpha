@@ -5,6 +5,7 @@ import type { FriendRelation, Friendship, PostFeedItem, Profile, RootStackParamL
 import { useAuth } from '../context/AuthContext';
 import { fetchProfile, fetchPostsByAuthor } from '../services/profileService';
 import {
+  fetchFriends,
   fetchFriendshipStatus,
   removeFriendship,
   respondToFriendRequest,
@@ -13,6 +14,8 @@ import {
 import { blockUser, isBlockedByMe, unblockUser } from '../services/blockService';
 import { submitReport } from '../services/reportService';
 import PostCard from '../components/PostCard';
+import FriendsGrid from '../components/FriendsGrid';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
@@ -32,6 +35,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
+  const [friends, setFriends] = useState<Profile[]>([]);
   const [friendship, setFriendship] = useState<Friendship | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,9 +47,14 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [reportMessage, setReportMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [profileData, postsData] = await Promise.all([fetchProfile(userId), fetchPostsByAuthor(userId)]);
+    const [profileData, postsData, friendsData] = await Promise.all([
+      fetchProfile(userId),
+      fetchPostsByAuthor(userId),
+      fetchFriends(userId),
+    ]);
     setProfile(profileData);
     setPosts(postsData);
+    setFriends(friendsData.map((row) => row.profile));
     navigation.setOptions({ title: profileData.display_name });
 
     if (!isSelf && currentUserId) {
@@ -234,6 +243,13 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           {reportMessage ? <Text style={styles.reportMessage}>{reportMessage}</Text> : null}
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <View style={styles.friendsSection}>
+            <Text style={styles.sectionTitle}>Amigos</Text>
+            <FriendsGrid friends={friends.slice(0, 12)} emptyText="Nenhum amigo ainda." />
+          </View>
+
+          <Text style={styles.sectionTitle}>Posts</Text>
         </View>
       }
       renderItem={({ item }) =>
@@ -255,41 +271,49 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  errorText: { color: '#c0392b', textAlign: 'center', marginTop: 8 },
-  retryText: { color: '#1a1a1a', fontWeight: '600', marginTop: 8 },
-  emptyText: { color: '#666', textAlign: 'center' },
-  list: { padding: 16, flexGrow: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: colors.shell },
+  errorText: { color: colors.danger, textAlign: 'center', marginTop: 8 },
+  retryText: { color: colors.accent, fontWeight: '600', marginTop: 8 },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  list: { padding: 16, flexGrow: 1, backgroundColor: colors.shell },
   header: { alignItems: 'center', marginBottom: 20 },
   avatar: { width: 84, height: 84, borderRadius: 42, marginBottom: 10 },
-  avatarPlaceholder: { backgroundColor: '#ccc' },
-  displayName: { fontSize: 20, fontWeight: '700' },
-  username: { color: '#666', marginTop: 2 },
-  bio: { marginTop: 10, color: '#333', textAlign: 'center' },
+  avatarPlaceholder: { backgroundColor: colors.placeholder },
+  displayName: { fontSize: 20, fontWeight: '700', color: colors.text },
+  username: { color: colors.textMuted, marginTop: 2 },
+  bio: { marginTop: 10, color: colors.text, textAlign: 'center' },
   actionsRow: { flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap', justifyContent: 'center' },
-  primaryButton: { backgroundColor: '#1a1a1a', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 18 },
-  primaryButtonText: { color: '#fff', fontWeight: '600' },
+  primaryButton: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 18 },
+  primaryButtonText: { color: colors.onAccent, fontWeight: '600' },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
-  secondaryButtonText: { color: '#444', fontWeight: '600' },
+  secondaryButtonText: { color: colors.text, fontWeight: '600' },
   reportRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, justifyContent: 'center' },
   reportChip: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },
-  reportChipText: { color: '#444', fontSize: 13 },
-  reportMessage: { color: '#333', marginTop: 10, textAlign: 'center' },
+  reportChipText: { color: colors.text, fontSize: 13 },
+  reportMessage: { color: colors.text, marginTop: 10, textAlign: 'center' },
   confirmRow: { marginTop: 16, alignItems: 'center' },
-  confirmText: { fontSize: 14, color: '#333', textAlign: 'center' },
+  confirmText: { fontSize: 14, color: colors.text, textAlign: 'center' },
   confirmButtons: { flexDirection: 'row', gap: 20, marginTop: 10 },
-  confirmCancel: { color: '#444', fontWeight: '600' },
-  confirmDestructive: { color: '#c0392b', fontWeight: '600' },
+  confirmCancel: { color: colors.textMuted, fontWeight: '600' },
+  confirmDestructive: { color: colors.danger, fontWeight: '600' },
+  friendsSection: {
+    width: '100%',
+    marginTop: 20,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+  },
+  sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginTop: 20, marginBottom: 10 },
 });

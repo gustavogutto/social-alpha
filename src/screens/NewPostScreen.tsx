@@ -14,6 +14,7 @@ import type { Group, PostVisibility, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createPost } from '../services/postService';
 import { fetchMyGroups } from '../services/groupService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewPost'>;
 
@@ -136,15 +137,17 @@ export default function NewPostScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, flexGrow: 1, backgroundColor: '#fff' },
+  container: { padding: 16, flexGrow: 1, backgroundColor: colors.shell },
   input: {
     minHeight: 100,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
     textAlignVertical: 'top',
+    backgroundColor: colors.card,
+    color: colors.text,
   },
   imageRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 8 },
   thumbnail: { width: 72, height: 72, borderRadius: 8 },
@@ -153,31 +156,33 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.card,
   },
-  addImageText: { fontSize: 12, color: '#666' },
-  sectionLabel: { marginTop: 20, marginBottom: 8, fontWeight: '600', color: '#444' },
+  addImageText: { fontSize: 12, color: colors.textMuted },
+  sectionLabel: { marginTop: 20, marginBottom: 8, fontWeight: '600', color: colors.textMuted },
   visibilityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
+    backgroundColor: colors.card,
   },
-  chipActive: { backgroundColor: '#1a1a1a', borderColor: '#1a1a1a' },
-  chipText: { color: '#444' },
-  chipTextActive: { color: '#fff' },
+  chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipText: { color: colors.text },
+  chipTextActive: { color: colors.onAccent },
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
     marginTop: 20,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#c0392b', marginTop: 12, textAlign: 'center' },
+  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
+  error: { color: colors.danger, marginTop: 12, textAlign: 'center' },
 });

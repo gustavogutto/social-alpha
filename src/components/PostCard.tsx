@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { Comment, PostFeedItem, RootStackParamList } from '../types';
 import { addComment, deletePost, fetchComments, setLiked } from '../services/postService';
+import { colors } from '../theme/colors';
 
 const VISIBILITY_LABEL: Record<PostFeedItem['visibility'], string> = {
   everyone: '',
@@ -195,9 +196,9 @@ export default function PostCard({
 }
 
 const styles = StyleSheet.create({
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
   card: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
@@ -205,39 +206,40 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 },
   cardHeaderIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   avatar: { width: 36, height: 36, borderRadius: 18 },
-  avatarPlaceholder: { backgroundColor: '#ccc' },
-  authorName: { fontWeight: '700' },
-  timestamp: { color: '#888', fontSize: 12 },
+  avatarPlaceholder: { backgroundColor: colors.placeholder },
+  authorName: { fontWeight: '700', color: colors.text },
+  timestamp: { color: colors.textMuted, fontSize: 12 },
   groupBadge: {
     marginLeft: 'auto',
-    backgroundColor: '#e5e5e5',
+    backgroundColor: colors.accentSoft,
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 10,
   },
-  groupBadgeText: { fontSize: 12, color: '#444' },
+  groupBadgeText: { fontSize: 12, color: colors.accent, fontWeight: '600' },
   deleteButton: { paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
-  deleteButtonText: { color: '#999', fontSize: 16, fontWeight: '700' },
+  deleteButtonText: { color: colors.textMuted, fontSize: 16, fontWeight: '700' },
   confirmRow: { paddingVertical: 4 },
-  confirmText: { fontSize: 14, color: '#333' },
+  confirmText: { fontSize: 14, color: colors.text },
   confirmButtons: { flexDirection: 'row', gap: 16, marginTop: 8 },
-  confirmCancel: { color: '#444', fontWeight: '600' },
-  confirmDestructive: { color: '#c0392b', fontWeight: '600' },
-  content: { fontSize: 15, marginBottom: 8 },
+  confirmCancel: { color: colors.textMuted, fontWeight: '600' },
+  confirmDestructive: { color: colors.danger, fontWeight: '600' },
+  content: { fontSize: 15, marginBottom: 8, color: colors.text },
   postImage: { width: '100%', height: 220, borderRadius: 10, marginBottom: 8 },
   actionsRow: { flexDirection: 'row', gap: 20, marginTop: 4 },
-  action: { color: '#444' },
-  actionActive: { color: '#c0392b' },
-  commentsSection: { marginTop: 10, borderTopWidth: 1, borderTopColor: '#e5e5e5', paddingTop: 8 },
-  comment: { fontSize: 14, marginBottom: 4 },
+  action: { color: colors.textMuted },
+  actionActive: { color: colors.accent },
+  commentsSection: { marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
+  comment: { fontSize: 14, marginBottom: 4, color: colors.text },
   commentInputRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 8 },
   commentInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    color: colors.text,
   },
-  sendComment: { color: '#1a1a1a', fontWeight: '600' },
+  sendComment: { color: colors.accent, fontWeight: '600' },
 });

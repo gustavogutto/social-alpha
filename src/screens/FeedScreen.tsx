@@ -7,6 +7,7 @@ import type { MainTabParamList, RootStackParamList, PostFeedItem } from '../type
 import { useAuth } from '../context/AuthContext';
 import { fetchFeed } from '../services/postService';
 import PostCard from '../components/PostCard';
+import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Feed'>,
@@ -60,7 +61,7 @@ export default function FeedScreen({ navigation }: Props) {
   if (!session?.user) return null;
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
       {error && posts.length > 0 ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorBannerText}>{error}</Text>
@@ -102,11 +103,11 @@ export default function FeedScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#666', textAlign: 'center' },
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
-  retryText: { color: '#1a1a1a', fontWeight: '600' },
-  errorBanner: { backgroundColor: '#fdecea', padding: 10 },
-  errorBannerText: { color: '#c0392b', textAlign: 'center', fontSize: 13 },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
+  retryText: { color: colors.accent, fontWeight: '600' },
+  errorBanner: { backgroundColor: colors.dangerSoft, padding: 10 },
+  errorBannerText: { color: colors.danger, textAlign: 'center', fontSize: 13 },
   list: { padding: 12, flexGrow: 1 },
   fab: {
     position: 'absolute',
@@ -115,9 +116,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 28 },
+  fabText: { color: colors.onAccent, fontSize: 28, lineHeight: 28 },
 });

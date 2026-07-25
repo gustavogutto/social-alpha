@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Friendship, Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchFriends, fetchPendingRequests, fetchSentRequests, removeFriendship, respondToFriendRequest } from '../services/friendService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Friends'>;
 
@@ -186,35 +187,35 @@ export default function FriendsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.shell },
   content: { padding: 16 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
-  retryText: { color: '#1a1a1a', fontWeight: '600' },
-  emptyText: { color: '#666' },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontWeight: '700', fontSize: 15, marginBottom: 10, color: '#444' },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
+  retryText: { color: colors.accent, fontWeight: '600' },
+  emptyText: { color: colors.textMuted },
+  section: { marginBottom: 20, backgroundColor: colors.card, borderRadius: 12, padding: 14 },
+  sectionTitle: { fontWeight: '700', fontSize: 15, marginBottom: 10, color: colors.text },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   avatar: { width: 36, height: 36, borderRadius: 18 },
-  avatarPlaceholder: { backgroundColor: '#ccc' },
-  name: { fontSize: 15, fontWeight: '600' },
+  avatarPlaceholder: { backgroundColor: colors.placeholder },
+  name: { fontSize: 15, fontWeight: '600', color: colors.text },
   actions: { flexDirection: 'row', gap: 8 },
-  acceptButton: { backgroundColor: '#1a1a1a', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
-  acceptButtonText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  acceptButton: { backgroundColor: colors.accent, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 12 },
+  acceptButtonText: { color: colors.onAccent, fontWeight: '600', fontSize: 13 },
   declineButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
-  declineButtonText: { color: '#444', fontWeight: '600', fontSize: 13 },
+  declineButtonText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
 });

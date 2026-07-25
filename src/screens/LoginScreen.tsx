@@ -11,6 +11,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types';
 import { signIn } from '../services/authService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -65,24 +66,26 @@ export default function LoginScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
+  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.shell },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center', color: colors.text },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
+    backgroundColor: colors.card,
+    color: colors.text,
   },
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
     marginTop: 8,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { textAlign: 'center', marginTop: 16, color: '#1a1a1a' },
-  error: { color: '#c0392b', marginBottom: 8, textAlign: 'center' },
+  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
+  link: { textAlign: 'center', marginTop: 16, color: colors.accent },
+  error: { color: colors.danger, marginBottom: 8, textAlign: 'center' },
 });

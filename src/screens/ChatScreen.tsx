@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Message, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchMessages, sendMessage, subscribeToMessages } from '../services/messageService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -62,7 +63,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#fff' }}
+      style={{ flex: 1, backgroundColor: colors.shell }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
@@ -107,29 +108,31 @@ export default function ChatScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   list: { padding: 12, flexGrow: 1 },
   bubble: { maxWidth: '80%', borderRadius: 14, padding: 10, marginBottom: 8 },
-  bubbleMine: { backgroundColor: '#1a1a1a', alignSelf: 'flex-end' },
-  bubbleTheirs: { backgroundColor: '#eee', alignSelf: 'flex-start' },
-  bubbleText: { color: '#111' },
-  bubbleTextMine: { color: '#fff' },
+  bubbleMine: { backgroundColor: colors.accent, alignSelf: 'flex-end' },
+  bubbleTheirs: { backgroundColor: colors.card, alignSelf: 'flex-start' },
+  bubbleText: { color: colors.text },
+  bubbleTextMine: { color: colors.onAccent },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: colors.border,
     gap: 8,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
+    backgroundColor: colors.card,
+    color: colors.text,
   },
   sendButton: { paddingHorizontal: 12 },
-  sendButtonText: { color: '#1a1a1a', fontWeight: '700' },
-  errorBanner: { backgroundColor: '#fdecea', padding: 10 },
-  errorBannerText: { color: '#c0392b', textAlign: 'center', fontSize: 13 },
-  sendErrorText: { color: '#c0392b', textAlign: 'center', fontSize: 13, paddingTop: 6 },
+  sendButtonText: { color: colors.accent, fontWeight: '700' },
+  errorBanner: { backgroundColor: colors.dangerSoft, padding: 10 },
+  errorBannerText: { color: colors.danger, textAlign: 'center', fontSize: 13 },
+  sendErrorText: { color: colors.danger, textAlign: 'center', fontSize: 13, paddingTop: 6 },
 });

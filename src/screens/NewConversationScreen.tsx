@@ -5,6 +5,7 @@ import type { Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchOtherProfiles } from '../services/groupService';
 import { createGroupConversation, findOrCreateDirectConversation } from '../services/messageService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewConversation'>;
 
@@ -102,34 +103,36 @@ export default function NewConversationScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flex: 1, backgroundColor: colors.shell, padding: 16 },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
   },
-  memberName: { fontSize: 15 },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: '#ccc' },
-  checkboxChecked: { backgroundColor: '#1a1a1a', borderColor: '#1a1a1a' },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 16 },
+  memberName: { fontSize: 15, color: colors.text },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: colors.border },
+  checkboxChecked: { backgroundColor: colors.accent, borderColor: colors.accent },
+  emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: 16 },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
     marginTop: 12,
+    backgroundColor: colors.card,
+    color: colors.text,
   },
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
     marginTop: 16,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#c0392b', marginTop: 12, textAlign: 'center' },
+  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
+  error: { color: colors.danger, marginTop: 12, textAlign: 'center' },
 });

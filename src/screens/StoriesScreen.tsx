@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList, StoryGroup } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createStory, fetchActiveStories } from '../services/storyService';
+import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Stories'>,
@@ -84,11 +85,11 @@ export default function StoriesScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
       <ScrollView horizontal contentContainerStyle={styles.row} showsHorizontalScrollIndicator={false}>
         <TouchableOpacity style={styles.bubbleWrap} onPress={handleAddStory} disabled={posting}>
           <View style={styles.addBubble}>
-            {posting ? <ActivityIndicator color="#fff" /> : <Text style={styles.addBubbleText}>+</Text>}
+            {posting ? <ActivityIndicator color={colors.accent} /> : <Text style={styles.addBubbleText}>+</Text>}
           </View>
           <Text style={styles.bubbleLabel} numberOfLines={1}>
             {myGroup ? 'Adicionar' : 'Seu story'}
@@ -149,23 +150,24 @@ export default function StoriesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#666', textAlign: 'center' },
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
-  retryText: { color: '#1a1a1a', fontWeight: '600' },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
+  retryText: { color: colors.accent, fontWeight: '600' },
   row: { flexDirection: 'row', padding: 16, gap: 16 },
   bubbleWrap: { alignItems: 'center', width: 68 },
-  bubble: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: '#1a1a1a' },
-  bubblePlaceholder: { backgroundColor: '#ccc' },
+  bubble: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: colors.accent },
+  bubblePlaceholder: { backgroundColor: colors.placeholder },
   addBubble: {
     width: 60,
     height: 60,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.card,
   },
-  addBubbleText: { fontSize: 28, color: '#666', lineHeight: 28 },
-  bubbleLabel: { fontSize: 12, marginTop: 4, textAlign: 'center' },
+  addBubbleText: { fontSize: 28, color: colors.textMuted, lineHeight: 28 },
+  bubbleLabel: { fontSize: 12, marginTop: 4, textAlign: 'center', color: colors.text },
 });

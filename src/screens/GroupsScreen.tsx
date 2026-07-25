@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList, Group } from '../types';
 import { fetchMyGroups } from '../services/groupService';
+import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Groups'>;
 
@@ -59,25 +60,25 @@ export default function GroupsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: { flex: 1, backgroundColor: colors.shell, padding: 16 },
   centered: { alignItems: 'center', justifyContent: 'center', marginTop: 32 },
-  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
-  retryText: { color: '#1a1a1a', fontWeight: '600' },
+  errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
+  retryText: { color: colors.accent, fontWeight: '600' },
   list: { flexGrow: 1 },
   groupRow: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: colors.card,
     borderRadius: 10,
     padding: 14,
     marginBottom: 10,
   },
-  groupName: { fontSize: 16, fontWeight: '600' },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 32 },
+  groupName: { fontSize: 16, fontWeight: '600', color: colors.text },
+  emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: 32 },
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
     marginTop: 12,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
 });

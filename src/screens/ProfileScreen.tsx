@@ -10,7 +10,7 @@ import { signOut } from '../services/authService';
 import { fetchPostsByAuthor } from '../services/profileService';
 import { fetchFriends } from '../services/friendService';
 import { fetchRecados } from '../services/recadoService';
-import { DEMO_PROFILES } from '../demo/demoData';
+import { DEMO_PROFILES, getDemoRecadosForMe } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
 import PageContainer from '../components/PageContainer';
@@ -30,6 +30,8 @@ export default function ProfileScreen({ navigation }: Props) {
   const [friends, setFriends] = useState<Profile[]>([]);
   const [recados, setRecados] = useState<RecadoFeedItem[]>([]);
   const displayedFriends = demoMode ? [...friends, ...DEMO_PROFILES] : friends;
+  const displayedRecados =
+    demoMode && session?.user ? [...getDemoRecadosForMe(session.user.id), ...recados] : recados;
 
   const load = useCallback(async () => {
     if (!session?.user) return;
@@ -113,7 +115,7 @@ export default function ProfileScreen({ navigation }: Props) {
                     <RecadosSection
                       profileId={session.user.id}
                       currentUserId={session.user.id}
-                      recados={recados}
+                      recados={displayedRecados}
                       canCompose={false}
                       onPosted={() => {}}
                       onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}

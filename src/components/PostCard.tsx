@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { Comment, PostFeedItem, RootStackParamList } from '../types';
+import type { PostFeedItem, RootStackParamList } from '../types';
 import { addComment, deletePost, fetchComments, setLiked } from '../services/postService';
+import { DEMO_COMMENTS } from '../demo/demoData';
 import { colors } from '../theme/colors';
 
 const VISIBILITY_LABEL: Record<PostFeedItem['visibility'], string> = {
@@ -11,6 +12,8 @@ const VISIBILITY_LABEL: Record<PostFeedItem['visibility'], string> = {
   group: '',
   friends: 'Amigos',
 };
+
+type DisplayComment = { id: string; content: string; authorName?: string };
 
 export default function PostCard({
   post,
@@ -26,7 +29,7 @@ export default function PostCard({
   const [liked, setLikedState] = useState(post.liked_by_me);
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<DisplayComment[]>([]);
   const [commentCount, setCommentCount] = useState(post.comment_count);
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
@@ -58,13 +61,22 @@ export default function PostCard({
   async function handleToggleComments() {
     const next = !commentsOpen;
     setCommentsOpen(next);
-    if (next && comments.length === 0 && !isDemo) {
-      setLoadingComments(true);
-      try {
-        setComments(await fetchComments(post.id));
-      } finally {
-        setLoadingComments(false);
-      }
+    if (!next || comments.length > 0) return;
+    if (isDemo) {
+      const seeded = DEMO_COMMENTS.filter((c) => c.post_id === post.id).map((c) => ({
+        id: c.id,
+        content: c.content,
+        authorName: c.author_name,
+      }));
+      setComments(seeded);
+      return;
+    }
+    setLoadingComments(true);
+    try {
+      const fetched = await fetchComments(post.id);
+      setComments(fetched.map((c) => ({ id: c.id, content: c.content })));
+    } finally {
+      setLoadingComments(false);
     }
   }
 
@@ -72,10 +84,7 @@ export default function PostCard({
     const text = newComment.trim();
     if (!text) return;
     if (isDemo) {
-      setComments((prev) => [
-        ...prev,
-        { id: `demo-comment-${Date.now()}`, post_id: post.id, author_id: currentUserId, content: text, created_at: new Date().toISOString() },
-      ]);
+      setComments((prev) => [...prev, { id: `demo-comment-${Date.now()}`, content: text, authorName: 'Você' }]);
       setCommentCount((c) => c + 1);
       setNewComment('');
       return;
@@ -84,7 +93,7 @@ export default function PostCard({
     setSendingComment(true);
     try {
       const comment = await addComment(post.id, currentUserId, text);
-      setComments((prev) => [...prev, comment]);
+      setComments((prev) => [...prev, { id: comment.id, content: comment.content }]);
       setCommentCount((c) => c + 1);
       setNewComment('');
     } catch (e) {
@@ -184,6 +193,7 @@ export default function PostCard({
               ) : (
                 comments.map((c) => (
                   <Text key={c.id} style={styles.comment}>
+                    {c.authorName ? <Text style={styles.commentAuthor}>{c.authorName}: </Text> : null}
                     {c.content}
                   </Text>
                 ))
@@ -254,6 +264,7 @@ const styles = StyleSheet.create({
   actionActive: { color: colors.accent },
   commentsSection: { marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
   comment: { fontSize: 14, marginBottom: 4, color: colors.text },
+  commentAuthor: { fontWeight: '700' },
   commentInputRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 8 },
   commentInput: {
     flex: 1,

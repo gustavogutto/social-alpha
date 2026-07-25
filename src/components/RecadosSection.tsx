@@ -89,11 +89,12 @@ export default function RecadosSection({
             <View style={{ flex: 1 }}>
               <View style={styles.recadoHeader}>
                 <Text style={styles.authorName}>{recado.author_display_name}</Text>
-                {(currentUserId === profileId || currentUserId === recado.author_id) && (
-                  <TouchableOpacity onPress={() => handleDelete(recado.id)}>
-                    <Text style={styles.deleteText}>✕</Text>
-                  </TouchableOpacity>
-                )}
+                {!recado.id.startsWith('demo-') &&
+                  (currentUserId === profileId || currentUserId === recado.author_id) && (
+                    <TouchableOpacity onPress={() => handleDelete(recado.id)}>
+                      <Text style={styles.deleteText}>✕</Text>
+                    </TouchableOpacity>
+                  )}
               </View>
               <Text style={styles.content}>{recado.content}</Text>
               <Text style={styles.timestamp}>{new Date(recado.created_at).toLocaleString()}</Text>

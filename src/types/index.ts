@@ -67,6 +67,17 @@ export type Friendship = {
 // Client-computed from a Friendship row + the current user's id - not a DB type.
 export type FriendRelation = 'none' | 'pending_sent' | 'pending_received' | 'friends';
 
+export type RecadoFeedItem = {
+  id: string;
+  profile_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  author_username: string;
+  author_display_name: string;
+  author_avatar_url: string | null;
+};
+
 export type StoryMediaType = 'image' | 'video';
 
 export type ActiveStory = {
@@ -115,7 +126,8 @@ export type NotificationType =
   | 'message'
   | 'group_invite'
   | 'friend_request'
-  | 'friend_accept';
+  | 'friend_accept'
+  | 'recado';
 
 export type NotificationFeedItem = {
   id: string;
@@ -128,6 +140,7 @@ export type NotificationFeedItem = {
   conversation_id: string | null;
   group_id: string | null;
   friendship_id: string | null;
+  recado_id: string | null;
   actor_username: string;
   actor_display_name: string;
   actor_avatar_url: string | null;

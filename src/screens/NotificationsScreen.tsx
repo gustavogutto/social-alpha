@@ -28,6 +28,8 @@ function describe(item: NotificationFeedItem): string {
       return `${item.actor_display_name} quer ser seu amigo`;
     case 'friend_accept':
       return `${item.actor_display_name} aceitou seu pedido de amizade`;
+    case 'recado':
+      return `${item.actor_display_name} deixou um recado no seu perfil`;
   }
 }
 
@@ -71,6 +73,8 @@ export default function NotificationsScreen({ navigation }: Props) {
       navigation.navigate('Groups');
     } else if (item.type === 'friend_request' || item.type === 'friend_accept') {
       navigation.navigate('UserProfile', { userId: item.actor_id });
+    } else if (item.type === 'recado') {
+      navigation.navigate('Main', { screen: 'Profile' });
     } else {
       navigation.navigate('Main', { screen: 'Feed' });
     }

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { FriendRelation, Friendship, PostFeedItem, Profile, RootStackParamList } from '../types';
+import type { FriendRelation, Friendship, PostFeedItem, Profile, RecadoFeedItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchProfile, fetchPostsByAuthor } from '../services/profileService';
 import {
@@ -13,10 +13,12 @@ import {
 } from '../services/friendService';
 import { blockUser, isBlockedByMe, unblockUser } from '../services/blockService';
 import { submitReport } from '../services/reportService';
+import { fetchRecados } from '../services/recadoService';
 import { DEMO_POSTS, DEMO_PROFILES } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
 import PageContainer from '../components/PageContainer';
+import RecadosSection from '../components/RecadosSection';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
@@ -39,6 +41,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
   const [friends, setFriends] = useState<Profile[]>([]);
+  const [recados, setRecados] = useState<RecadoFeedItem[]>([]);
   const [friendship, setFriendship] = useState<Friendship | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -60,14 +63,16 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       return;
     }
 
-    const [profileData, postsData, friendsData] = await Promise.all([
+    const [profileData, postsData, friendsData, recadosData] = await Promise.all([
       fetchProfile(userId),
       fetchPostsByAuthor(userId),
       fetchFriends(userId),
+      fetchRecados(userId),
     ]);
     setProfile(profileData);
     setPosts(postsData);
     setFriends(friendsData.map((row) => row.profile));
+    setRecados(recadosData);
     navigation.setOptions({ title: profileData.display_name });
 
     if (!isSelf && currentUserId) {
@@ -209,6 +214,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           )}
           <Text style={styles.displayName}>{profile.display_name}</Text>
           <Text style={styles.username}>@{profile.username}</Text>
+          {!isDemo && (
+            <Text style={styles.stats}>
+              {friends.length} amigos · {posts.length} posts · Desde{' '}
+              {new Date(profile.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            </Text>
+          )}
           {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
           {isDemo && (
@@ -271,6 +282,20 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <FriendsGrid friends={friends.slice(0, 12)} emptyText="Nenhum amigo ainda." />
           </View>
 
+          {!isDemo && currentUserId && (
+            <View style={styles.friendsSection}>
+              <Text style={styles.sectionTitle}>Recados</Text>
+              <RecadosSection
+                profileId={userId}
+                currentUserId={currentUserId}
+                recados={recados}
+                canCompose={!isSelf && relation === 'friends'}
+                onPosted={(recado) => setRecados((prev) => [recado, ...prev])}
+                onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}
+              />
+            </View>
+          )}
+
           <Text style={styles.sectionTitle}>Posts</Text>
         </View>
       }
@@ -305,6 +330,7 @@ const styles = StyleSheet.create({
   avatarPlaceholder: { backgroundColor: colors.placeholder },
   displayName: { fontSize: 20, fontWeight: '700', color: colors.text },
   username: { color: colors.textMuted, marginTop: 2 },
+  stats: { color: colors.textMuted, marginTop: 6, fontSize: 13 },
   bio: { marginTop: 10, color: colors.text, textAlign: 'center' },
   actionsRow: { flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap', justifyContent: 'center' },
   primaryButton: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 18 },

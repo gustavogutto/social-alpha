@@ -9,11 +9,14 @@ import { useDemo } from '../context/DemoContext';
 import { signOut } from '../services/authService';
 import { fetchPostsByAuthor } from '../services/profileService';
 import { fetchFriends } from '../services/friendService';
+import { fetchRecados } from '../services/recadoService';
 import { DEMO_PROFILES } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
 import PageContainer from '../components/PageContainer';
+import RecadosSection from '../components/RecadosSection';
 import { colors } from '../theme/colors';
+import type { RecadoFeedItem } from '../types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Profile'>,
@@ -25,16 +28,19 @@ export default function ProfileScreen({ navigation }: Props) {
   const { demoMode, setDemoMode } = useDemo();
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
   const [friends, setFriends] = useState<Profile[]>([]);
+  const [recados, setRecados] = useState<RecadoFeedItem[]>([]);
   const displayedFriends = demoMode ? [...friends, ...DEMO_PROFILES] : friends;
 
   const load = useCallback(async () => {
     if (!session?.user) return;
-    const [postsData, friendsData] = await Promise.all([
+    const [postsData, friendsData, recadosData] = await Promise.all([
       fetchPostsByAuthor(session.user.id),
       fetchFriends(session.user.id),
+      fetchRecados(session.user.id),
     ]);
     setPosts(postsData);
     setFriends(friendsData.map((row) => row.profile));
+    setRecados(recadosData);
   }, [session?.user]);
 
   useEffect(() => {
@@ -62,6 +68,10 @@ export default function ProfileScreen({ navigation }: Props) {
             )}
             <Text style={styles.title}>{profile?.display_name ?? 'Perfil'}</Text>
             <Text style={styles.subtitle}>@{profile?.username}</Text>
+            <Text style={styles.stats}>
+              {friends.length} amigos · {posts.length} posts
+              {profile ? ` · Desde ${new Date(profile.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}` : ''}
+            </Text>
             {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
             <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Groups')}>
               <Text style={styles.secondaryButtonText}>Meus grupos</Text>
@@ -95,6 +105,20 @@ export default function ProfileScreen({ navigation }: Props) {
             />
           </View>
 
+          <View style={styles.recadosSection}>
+            <Text style={styles.sectionTitle}>Recados</Text>
+            {session?.user ? (
+              <RecadosSection
+                profileId={session.user.id}
+                currentUserId={session.user.id}
+                recados={recados}
+                canCompose={false}
+                onPosted={() => {}}
+                onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}
+              />
+            ) : null}
+          </View>
+
           <Text style={styles.sectionTitle}>Meus posts</Text>
         </View>
       }
@@ -122,6 +146,7 @@ const styles = StyleSheet.create({
   avatarPlaceholder: { backgroundColor: colors.placeholder },
   title: { fontSize: 22, fontWeight: '700', color: colors.text },
   subtitle: { color: colors.textMuted, marginTop: 4 },
+  stats: { color: colors.textMuted, marginTop: 6, fontSize: 13 },
   bio: { marginTop: 10, color: colors.text, textAlign: 'center' },
   secondaryButton: {
     marginTop: 20,
@@ -160,4 +185,11 @@ const styles = StyleSheet.create({
   },
   demoTitle: { fontWeight: '700', fontSize: 14, color: colors.text },
   demoSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
+  recadosSection: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+  },
 });

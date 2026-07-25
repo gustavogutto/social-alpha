@@ -18,6 +18,8 @@ import CreateGroupScreen from '../screens/CreateGroupScreen';
 import StoryViewerScreen from '../screens/StoryViewerScreen';
 import ChatScreen from '../screens/ChatScreen';
 import NewConversationScreen from '../screens/NewConversationScreen';
+import FriendsScreen from '../screens/FriendsScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -80,6 +82,12 @@ export default function AppNavigator() {
               name="NewConversation"
               component={NewConversationScreen}
               options={{ headerShown: true, title: 'Nova conversa', presentation: 'modal' }}
+            />
+            <RootStack.Screen name="Friends" component={FriendsScreen} options={{ headerShown: true, title: 'Amigos' }} />
+            <RootStack.Screen
+              name="UserProfile"
+              component={UserProfileScreen}
+              options={{ headerShown: true, title: 'Perfil' }}
             />
           </>
         ) : (

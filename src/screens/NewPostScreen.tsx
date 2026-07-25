@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { Group, RootStackParamList } from '../types';
+import type { Group, PostVisibility, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createPost } from '../services/postService';
 import { fetchMyGroups } from '../services/groupService';
@@ -22,6 +22,7 @@ export default function NewPostScreen({ navigation }: Props) {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<{ uri: string; mimeType?: string | null }[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [visibility, setVisibility] = useState<PostVisibility>('everyone');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -61,8 +62,8 @@ export default function NewPostScreen({ navigation }: Props) {
         authorId: session.user.id,
         content: content.trim(),
         images,
-        visibility: selectedGroupId ? 'group' : 'everyone',
-        groupId: selectedGroupId,
+        visibility,
+        groupId: visibility === 'group' ? selectedGroupId : null,
       });
       navigation.goBack();
     } catch (e) {
@@ -93,20 +94,33 @@ export default function NewPostScreen({ navigation }: Props) {
       <Text style={styles.sectionLabel}>Quem pode ver</Text>
       <View style={styles.visibilityRow}>
         <TouchableOpacity
-          style={[styles.chip, selectedGroupId === null && styles.chipActive]}
-          onPress={() => setSelectedGroupId(null)}
+          style={[styles.chip, visibility === 'everyone' && styles.chipActive]}
+          onPress={() => {
+            setVisibility('everyone');
+            setSelectedGroupId(null);
+          }}
         >
-          <Text style={selectedGroupId === null ? styles.chipTextActive : styles.chipText}>
-            Todo mundo
-          </Text>
+          <Text style={visibility === 'everyone' ? styles.chipTextActive : styles.chipText}>Todo mundo</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.chip, visibility === 'friends' && styles.chipActive]}
+          onPress={() => {
+            setVisibility('friends');
+            setSelectedGroupId(null);
+          }}
+        >
+          <Text style={visibility === 'friends' ? styles.chipTextActive : styles.chipText}>Amigos</Text>
         </TouchableOpacity>
         {groups.map((group) => (
           <TouchableOpacity
             key={group.id}
-            style={[styles.chip, selectedGroupId === group.id && styles.chipActive]}
-            onPress={() => setSelectedGroupId(group.id)}
+            style={[styles.chip, visibility === 'group' && selectedGroupId === group.id && styles.chipActive]}
+            onPress={() => {
+              setVisibility('group');
+              setSelectedGroupId(group.id);
+            }}
           >
-            <Text style={selectedGroupId === group.id ? styles.chipTextActive : styles.chipText}>
+            <Text style={visibility === 'group' && selectedGroupId === group.id ? styles.chipTextActive : styles.chipText}>
               {group.name}
             </Text>
           </TouchableOpacity>

@@ -1,0 +1,233 @@
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { Comment, PostFeedItem, RootStackParamList } from '../types';
+import { addComment, deletePost, fetchComments, setLiked } from '../services/postService';
+
+const VISIBILITY_LABEL: Record<PostFeedItem['visibility'], string> = {
+  everyone: '',
+  group: '',
+  friends: 'Amigos',
+};
+
+export default function PostCard({
+  post,
+  currentUserId,
+  onDeleted,
+}: {
+  post: PostFeedItem;
+  currentUserId: string;
+  onDeleted?: (postId: string) => void;
+}) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [liked, setLikedState] = useState(post.liked_by_me);
+  const [likeCount, setLikeCount] = useState(post.like_count);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(post.comment_count);
+  const [newComment, setNewComment] = useState('');
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [sendingComment, setSendingComment] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    setLikedState(post.liked_by_me);
+    setLikeCount(post.like_count);
+    setCommentCount(post.comment_count);
+  }, [post.liked_by_me, post.like_count, post.comment_count]);
+
+  async function handleToggleLike() {
+    const next = !liked;
+    setLikedState(next);
+    setLikeCount((c) => c + (next ? 1 : -1));
+    try {
+      await setLiked(post.id, currentUserId, next);
+    } catch {
+      setLikedState(!next);
+      setLikeCount((c) => c + (next ? -1 : 1));
+    }
+  }
+
+  async function handleToggleComments() {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    if (next && comments.length === 0) {
+      setLoadingComments(true);
+      try {
+        setComments(await fetchComments(post.id));
+      } finally {
+        setLoadingComments(false);
+      }
+    }
+  }
+
+  async function handleAddComment() {
+    const text = newComment.trim();
+    if (!text) return;
+    setCommentError(null);
+    setSendingComment(true);
+    try {
+      const comment = await addComment(post.id, currentUserId, text);
+      setComments((prev) => [...prev, comment]);
+      setCommentCount((c) => c + 1);
+      setNewComment('');
+    } catch (e) {
+      setCommentError(e instanceof Error ? e.message : 'Não foi possível comentar.');
+    } finally {
+      setSendingComment(false);
+    }
+  }
+
+  function handleDelete() {
+    Alert.alert('Excluir post', 'Tem certeza que quer excluir este post?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
+          setDeleting(true);
+          try {
+            await deletePost(post.id, currentUserId);
+            onDeleted?.(post.id);
+          } catch (e) {
+            Alert.alert('Erro', e instanceof Error ? e.message : 'Não foi possível excluir o post.');
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    ]);
+  }
+
+  const visibilityLabel = VISIBILITY_LABEL[post.visibility];
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <TouchableOpacity
+          style={styles.cardHeaderIdentity}
+          onPress={() => navigation.navigate('UserProfile', { userId: post.author_id })}
+        >
+          {post.author_avatar_url ? (
+            <Image source={{ uri: post.author_avatar_url }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]} />
+          )}
+          <View>
+            <Text style={styles.authorName}>{post.author_display_name}</Text>
+            <Text style={styles.timestamp}>{new Date(post.created_at).toLocaleString()}</Text>
+          </View>
+        </TouchableOpacity>
+        {post.group_name ? (
+          <View style={styles.groupBadge}>
+            <Text style={styles.groupBadgeText}>{post.group_name}</Text>
+          </View>
+        ) : visibilityLabel ? (
+          <View style={styles.groupBadge}>
+            <Text style={styles.groupBadgeText}>{visibilityLabel}</Text>
+          </View>
+        ) : null}
+        {post.author_id === currentUserId ? (
+          <TouchableOpacity onPress={handleDelete} disabled={deleting} style={styles.deleteButton}>
+            <Text style={styles.deleteButtonText}>{deleting ? '...' : '✕'}</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      {post.content ? <Text style={styles.content}>{post.content}</Text> : null}
+      {post.media_urls.map((url) => (
+        <Image key={url} source={{ uri: url }} style={styles.postImage} />
+      ))}
+      <View style={styles.actionsRow}>
+        <TouchableOpacity onPress={handleToggleLike}>
+          <Text style={liked ? styles.actionActive : styles.action}>
+            {liked ? '♥' : '♡'} {likeCount}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleToggleComments}>
+          <Text style={styles.action}>💬 {commentCount}</Text>
+        </TouchableOpacity>
+      </View>
+      {commentsOpen && (
+        <View style={styles.commentsSection}>
+          {loadingComments ? (
+            <ActivityIndicator />
+          ) : (
+            comments.map((c) => (
+              <Text key={c.id} style={styles.comment}>
+                {c.content}
+              </Text>
+            ))
+          )}
+          {commentError ? <Text style={styles.errorText}>{commentError}</Text> : null}
+          <View style={styles.commentInputRow}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Escreva um comentário..."
+              value={newComment}
+              onChangeText={setNewComment}
+              onSubmitEditing={handleAddComment}
+              editable={!sendingComment}
+            />
+            <TouchableOpacity onPress={handleAddComment} disabled={sendingComment}>
+              <Text style={styles.sendComment}>{sendingComment ? '...' : 'Enviar'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  errorText: { color: '#c0392b', textAlign: 'center', marginBottom: 10 },
+  card: {
+    backgroundColor: '#f7f7f7',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 },
+  cardHeaderIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  avatar: { width: 36, height: 36, borderRadius: 18 },
+  avatarPlaceholder: { backgroundColor: '#ccc' },
+  authorName: { fontWeight: '700' },
+  timestamp: { color: '#888', fontSize: 12 },
+  groupBadge: {
+    marginLeft: 'auto',
+    backgroundColor: '#e5e5e5',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  groupBadgeText: { fontSize: 12, color: '#444' },
+  deleteButton: { paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
+  deleteButtonText: { color: '#999', fontSize: 16, fontWeight: '700' },
+  content: { fontSize: 15, marginBottom: 8 },
+  postImage: { width: '100%', height: 220, borderRadius: 10, marginBottom: 8 },
+  actionsRow: { flexDirection: 'row', gap: 20, marginTop: 4 },
+  action: { color: '#444' },
+  actionActive: { color: '#c0392b' },
+  commentsSection: { marginTop: 10, borderTopWidth: 1, borderTopColor: '#e5e5e5', paddingTop: 8 },
+  comment: { fontSize: 14, marginBottom: 4 },
+  commentInputRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 8 },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  sendComment: { color: '#1a1a1a', fontWeight: '600' },
+});

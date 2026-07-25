@@ -22,6 +22,10 @@ function describe(item: NotificationFeedItem): string {
       return `${item.actor_display_name} te enviou uma mensagem`;
     case 'group_invite':
       return `${item.actor_display_name} te adicionou a um grupo`;
+    case 'friend_request':
+      return `${item.actor_display_name} quer ser seu amigo`;
+    case 'friend_accept':
+      return `${item.actor_display_name} aceitou seu pedido de amizade`;
   }
 }
 
@@ -63,6 +67,8 @@ export default function NotificationsScreen({ navigation }: Props) {
       navigation.navigate('Main', { screen: 'Messages' });
     } else if (item.type === 'group_invite') {
       navigation.navigate('Groups');
+    } else if (item.type === 'friend_request' || item.type === 'friend_accept') {
+      navigation.navigate('UserProfile', { userId: item.actor_id });
     } else {
       navigation.navigate('Main', { screen: 'Feed' });
     }

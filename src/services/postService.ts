@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { uploadMedia } from './mediaUpload';
-import type { Comment, PostFeedItem } from '../types';
+import type { Comment, PostFeedItem, PostVisibility } from '../types';
 
 export async function fetchFeed(): Promise<PostFeedItem[]> {
   const { data, error } = await supabase.from('post_feed').select('*');
@@ -12,7 +12,7 @@ export async function createPost(params: {
   authorId: string;
   content: string;
   images: { uri: string; mimeType?: string | null }[];
-  visibility: 'everyone' | 'group';
+  visibility: PostVisibility;
   groupId: string | null;
 }): Promise<void> {
   const { authorId, content, images, visibility, groupId } = params;
@@ -29,6 +29,11 @@ export async function createPost(params: {
     visibility,
     group_id: groupId,
   });
+  if (error) throw error;
+}
+
+export async function deletePost(postId: string, authorId: string): Promise<void> {
+  const { error } = await supabase.from('posts').delete().eq('id', postId).eq('author_id', authorId);
   if (error) throw error;
 }
 

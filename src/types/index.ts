@@ -9,7 +9,7 @@ export type Profile = {
   created_at: string;
 };
 
-export type PostVisibility = 'everyone' | 'group';
+export type PostVisibility = 'everyone' | 'group' | 'friends';
 
 export type Post = {
   id: string;
@@ -51,6 +51,21 @@ export type GroupMember = {
   user_id: string;
   added_at: string;
 };
+
+export type FriendshipStatus = 'pending' | 'accepted';
+
+export type Friendship = {
+  id: string;
+  user_id_a: string;
+  user_id_b: string;
+  requester_id: string;
+  status: FriendshipStatus;
+  created_at: string;
+  responded_at: string | null;
+};
+
+// Client-computed from a Friendship row + the current user's id - not a DB type.
+export type FriendRelation = 'none' | 'pending_sent' | 'pending_received' | 'friends';
 
 export type StoryMediaType = 'image' | 'video';
 
@@ -94,17 +109,25 @@ export type ConversationWithParticipants = ConversationSummary & {
   otherParticipants: Profile[];
 };
 
-export type NotificationType = 'like' | 'comment' | 'message' | 'group_invite';
+export type NotificationType =
+  | 'like'
+  | 'comment'
+  | 'message'
+  | 'group_invite'
+  | 'friend_request'
+  | 'friend_accept';
 
 export type NotificationFeedItem = {
   id: string;
   type: NotificationType;
   read: boolean;
   created_at: string;
+  actor_id: string;
   post_id: string | null;
   comment_id: string | null;
   conversation_id: string | null;
   group_id: string | null;
+  friendship_id: string | null;
   actor_username: string;
   actor_display_name: string;
   actor_avatar_url: string | null;
@@ -120,6 +143,8 @@ export type RootStackParamList = {
   StoryViewer: { group: StoryGroup };
   Chat: { conversationId: string; title: string };
   NewConversation: undefined;
+  Friends: undefined;
+  UserProfile: { userId: string };
 };
 
 export type MainTabParamList = {

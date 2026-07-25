@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { FriendRelation, Friendship, PostFeedItem, Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -37,7 +37,10 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [confirmingUnfriend, setConfirmingUnfriend] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [profileData, postsData] = await Promise.all([fetchProfile(userId), fetchPostsByAuthor(userId)]);
@@ -69,32 +72,39 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   async function handleFriendAction() {
     if (!currentUserId) return;
+    const relation = relationFromFriendship(friendship, currentUserId);
+    if (relation === 'friends') {
+      setConfirmingUnfriend(true);
+      return;
+    }
     setActionBusy(true);
+    setActionError(null);
     try {
-      const relation = relationFromFriendship(friendship, currentUserId);
       if (relation === 'none') {
         await sendFriendRequest(currentUserId, userId);
       } else if (relation === 'pending_sent' && friendship) {
         await removeFriendship(friendship.id);
       } else if (relation === 'pending_received' && friendship) {
         await respondToFriendRequest(friendship.id, true);
-      } else if (relation === 'friends' && friendship) {
-        Alert.alert('Desfazer amizade', `Remover ${profile?.display_name} dos seus amigos?`, [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Remover',
-            style: 'destructive',
-            onPress: async () => {
-              await removeFriendship(friendship.id);
-              await reload();
-            },
-          },
-        ]);
-        return;
       }
       await reload();
     } catch (e) {
-      Alert.alert('Erro', e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
+      setActionError(e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleConfirmUnfriend() {
+    if (!friendship) return;
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await removeFriendship(friendship.id);
+      setConfirmingUnfriend(false);
+      await reload();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
     } finally {
       setActionBusy(false);
     }
@@ -103,6 +113,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   async function handleToggleBlock() {
     if (!currentUserId) return;
     setActionBusy(true);
+    setActionError(null);
     try {
       if (blocked) {
         await unblockUser(currentUserId, userId);
@@ -111,7 +122,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       }
       await reload();
     } catch (e) {
-      Alert.alert('Erro', e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
+      setActionError(e instanceof Error ? e.message : 'Não foi possível concluir a ação.');
     } finally {
       setActionBusy(false);
     }
@@ -122,9 +133,9 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     setReportOpen(false);
     try {
       await submitReport({ reporterId: currentUserId, targetType: 'profile', targetId: userId, reason });
-      Alert.alert('Denúncia enviada', 'Obrigado, vamos analisar.');
+      setReportMessage('Denúncia enviada. Obrigado, vamos analisar.');
     } catch (e) {
-      Alert.alert('Erro', e instanceof Error ? e.message : 'Não foi possível enviar a denúncia.');
+      setReportMessage(e instanceof Error ? e.message : 'Não foi possível enviar a denúncia.');
     }
   }
 
@@ -175,7 +186,21 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           <Text style={styles.username}>@{profile.username}</Text>
           {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
-          {!isSelf && (
+          {!isSelf && confirmingUnfriend && (
+            <View style={styles.confirmRow}>
+              <Text style={styles.confirmText}>Remover {profile.display_name} dos seus amigos?</Text>
+              <View style={styles.confirmButtons}>
+                <TouchableOpacity onPress={() => setConfirmingUnfriend(false)} disabled={actionBusy}>
+                  <Text style={styles.confirmCancel}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleConfirmUnfriend} disabled={actionBusy}>
+                  <Text style={styles.confirmDestructive}>{actionBusy ? 'Removendo...' : 'Remover'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {!isSelf && !confirmingUnfriend && (
             <View style={styles.actionsRow}>
               <TouchableOpacity style={styles.primaryButton} disabled={actionBusy} onPress={handleFriendAction}>
                 <Text style={styles.primaryButtonText}>{friendButtonLabel}</Text>
@@ -183,11 +208,19 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               <TouchableOpacity style={styles.secondaryButton} disabled={actionBusy} onPress={handleToggleBlock}>
                 <Text style={styles.secondaryButtonText}>{blocked ? 'Desbloquear' : 'Bloquear'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} onPress={() => setReportOpen((v) => !v)}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => {
+                  setReportMessage(null);
+                  setReportOpen((v) => !v);
+                }}
+              >
                 <Text style={styles.secondaryButtonText}>Denunciar</Text>
               </TouchableOpacity>
             </View>
           )}
+
+          {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
 
           {reportOpen && (
             <View style={styles.reportRow}>
@@ -198,6 +231,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               ))}
             </View>
           )}
+          {reportMessage ? <Text style={styles.reportMessage}>{reportMessage}</Text> : null}
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
@@ -252,4 +286,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   reportChipText: { color: '#444', fontSize: 13 },
+  reportMessage: { color: '#333', marginTop: 10, textAlign: 'center' },
+  confirmRow: { marginTop: 16, alignItems: 'center' },
+  confirmText: { fontSize: 14, color: '#333', textAlign: 'center' },
+  confirmButtons: { flexDirection: 'row', gap: 20, marginTop: 10 },
+  confirmCancel: { color: '#444', fontWeight: '600' },
+  confirmDestructive: { color: '#c0392b', fontWeight: '600' },
 });

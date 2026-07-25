@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { Comment, PostFeedItem, RootStackParamList } from '../types';
@@ -40,6 +31,8 @@ export default function PostCard({
   const [commentError, setCommentError] = useState<string | null>(null);
   const [sendingComment, setSendingComment] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setLikedState(post.liked_by_me);
@@ -89,25 +82,16 @@ export default function PostCard({
     }
   }
 
-  function handleDelete() {
-    Alert.alert('Excluir post', 'Tem certeza que quer excluir este post?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          setDeleting(true);
-          try {
-            await deletePost(post.id, currentUserId);
-            onDeleted?.(post.id);
-          } catch (e) {
-            Alert.alert('Erro', e instanceof Error ? e.message : 'Não foi possível excluir o post.');
-          } finally {
-            setDeleting(false);
-          }
-        },
-      },
-    ]);
+  async function handleConfirmDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deletePost(post.id, currentUserId);
+      onDeleted?.(post.id);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Não foi possível excluir o post.');
+      setDeleting(false);
+    }
   }
 
   const visibilityLabel = VISIBILITY_LABEL[post.visibility];
@@ -139,51 +123,72 @@ export default function PostCard({
           </View>
         ) : null}
         {post.author_id === currentUserId ? (
-          <TouchableOpacity onPress={handleDelete} disabled={deleting} style={styles.deleteButton}>
+          <TouchableOpacity
+            onPress={() => setConfirmingDelete(true)}
+            disabled={deleting}
+            style={styles.deleteButton}
+          >
             <Text style={styles.deleteButtonText}>{deleting ? '...' : '✕'}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
-      {post.content ? <Text style={styles.content}>{post.content}</Text> : null}
-      {post.media_urls.map((url) => (
-        <Image key={url} source={{ uri: url }} style={styles.postImage} />
-      ))}
-      <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={handleToggleLike}>
-          <Text style={liked ? styles.actionActive : styles.action}>
-            {liked ? '♥' : '♡'} {likeCount}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleToggleComments}>
-          <Text style={styles.action}>💬 {commentCount}</Text>
-        </TouchableOpacity>
-      </View>
-      {commentsOpen && (
-        <View style={styles.commentsSection}>
-          {loadingComments ? (
-            <ActivityIndicator />
-          ) : (
-            comments.map((c) => (
-              <Text key={c.id} style={styles.comment}>
-                {c.content}
-              </Text>
-            ))
-          )}
-          {commentError ? <Text style={styles.errorText}>{commentError}</Text> : null}
-          <View style={styles.commentInputRow}>
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Escreva um comentário..."
-              value={newComment}
-              onChangeText={setNewComment}
-              onSubmitEditing={handleAddComment}
-              editable={!sendingComment}
-            />
-            <TouchableOpacity onPress={handleAddComment} disabled={sendingComment}>
-              <Text style={styles.sendComment}>{sendingComment ? '...' : 'Enviar'}</Text>
+      {confirmingDelete ? (
+        <View style={styles.confirmRow}>
+          <Text style={styles.confirmText}>Excluir este post?</Text>
+          {deleteError ? <Text style={styles.errorText}>{deleteError}</Text> : null}
+          <View style={styles.confirmButtons}>
+            <TouchableOpacity onPress={() => setConfirmingDelete(false)} disabled={deleting}>
+              <Text style={styles.confirmCancel}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleConfirmDelete} disabled={deleting}>
+              <Text style={styles.confirmDestructive}>{deleting ? 'Excluindo...' : 'Excluir'}</Text>
             </TouchableOpacity>
           </View>
         </View>
+      ) : (
+        <>
+          {post.content ? <Text style={styles.content}>{post.content}</Text> : null}
+          {post.media_urls.map((url) => (
+            <Image key={url} source={{ uri: url }} style={styles.postImage} />
+          ))}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity onPress={handleToggleLike}>
+              <Text style={liked ? styles.actionActive : styles.action}>
+                {liked ? '♥' : '♡'} {likeCount}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleToggleComments}>
+              <Text style={styles.action}>💬 {commentCount}</Text>
+            </TouchableOpacity>
+          </View>
+          {commentsOpen && (
+            <View style={styles.commentsSection}>
+              {loadingComments ? (
+                <ActivityIndicator />
+              ) : (
+                comments.map((c) => (
+                  <Text key={c.id} style={styles.comment}>
+                    {c.content}
+                  </Text>
+                ))
+              )}
+              {commentError ? <Text style={styles.errorText}>{commentError}</Text> : null}
+              <View style={styles.commentInputRow}>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder="Escreva um comentário..."
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  onSubmitEditing={handleAddComment}
+                  editable={!sendingComment}
+                />
+                <TouchableOpacity onPress={handleAddComment} disabled={sendingComment}>
+                  <Text style={styles.sendComment}>{sendingComment ? '...' : 'Enviar'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -213,6 +218,11 @@ const styles = StyleSheet.create({
   groupBadgeText: { fontSize: 12, color: '#444' },
   deleteButton: { paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
   deleteButtonText: { color: '#999', fontSize: 16, fontWeight: '700' },
+  confirmRow: { paddingVertical: 4 },
+  confirmText: { fontSize: 14, color: '#333' },
+  confirmButtons: { flexDirection: 'row', gap: 16, marginTop: 8 },
+  confirmCancel: { color: '#444', fontWeight: '600' },
+  confirmDestructive: { color: '#c0392b', fontWeight: '600' },
   content: { fontSize: 15, marginBottom: 8 },
   postImage: { width: '100%', height: 220, borderRadius: 10, marginBottom: 8 },
   actionsRow: { flexDirection: 'row', gap: 20, marginTop: 4 },

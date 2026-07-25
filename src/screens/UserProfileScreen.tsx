@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { FriendRelation, Friendship, PostFeedItem, Profile, RecadoFeedItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,7 @@ import { DEMO_POSTS, DEMO_PROFILES } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
 import PageContainer from '../components/PageContainer';
+import OrkutColumns from '../components/OrkutColumns';
 import RecadosSection from '../components/RecadosSection';
 import { colors } from '../theme/colors';
 
@@ -197,181 +198,209 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           ? 'Aceitar pedido'
           : 'Amigos';
 
+  const memberSince = new Date(profile.created_at).toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+  });
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.shell }}>
-    <PageContainer maxWidth={640}>
-    <FlatList
-      style={{ flex: 1 }}
-      data={posts}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.list}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          {profile.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]} />
-          )}
-          <Text style={styles.displayName}>{profile.display_name}</Text>
-          <Text style={styles.username}>@{profile.username}</Text>
-          {!isDemo && (
-            <Text style={styles.stats}>
-              {friends.length} amigos · {posts.length} posts · Desde{' '}
-              {new Date(profile.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-            </Text>
-          )}
-          {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <PageContainer maxWidth={1000}>
+          <OrkutColumns
+            left={
+              <View style={styles.card}>
+                {profile.avatar_url ? (
+                  <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]} />
+                )}
+                <Text style={styles.name}>{profile.display_name}</Text>
+                <Text style={styles.username}>@{profile.username}</Text>
 
-          {isDemo && (
-            <View style={styles.demoNotice}>
-              <Text style={styles.demoNoticeText}>Perfil de exemplo (modo demonstração)</Text>
-            </View>
-          )}
+                {isDemo ? (
+                  <View style={styles.demoNotice}>
+                    <Text style={styles.demoNoticeText}>Perfil de exemplo</Text>
+                  </View>
+                ) : (
+                  <View style={styles.statList}>
+                    <Text style={styles.statLine}>
+                      <Text style={styles.statNumber}>{friends.length}</Text> amigos
+                    </Text>
+                    <Text style={styles.statLine}>
+                      <Text style={styles.statNumber}>{posts.length}</Text> posts
+                    </Text>
+                    <Text style={styles.statLine}>Desde {memberSince}</Text>
+                  </View>
+                )}
 
-          {!isSelf && !isDemo && confirmingUnfriend && (
-            <View style={styles.confirmRow}>
-              <Text style={styles.confirmText}>Remover {profile.display_name} dos seus amigos?</Text>
-              <View style={styles.confirmButtons}>
-                <TouchableOpacity onPress={() => setConfirmingUnfriend(false)} disabled={actionBusy}>
-                  <Text style={styles.confirmCancel}>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleConfirmUnfriend} disabled={actionBusy}>
-                  <Text style={styles.confirmDestructive}>{actionBusy ? 'Removendo...' : 'Remover'}</Text>
-                </TouchableOpacity>
+                {!isSelf && !isDemo && confirmingUnfriend && (
+                  <View style={styles.confirmBox}>
+                    <Text style={styles.confirmText}>Remover {profile.display_name} dos seus amigos?</Text>
+                    <View style={styles.confirmButtons}>
+                      <TouchableOpacity onPress={() => setConfirmingUnfriend(false)} disabled={actionBusy}>
+                        <Text style={styles.confirmCancel}>Cancelar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleConfirmUnfriend} disabled={actionBusy}>
+                        <Text style={styles.confirmDestructive}>{actionBusy ? 'Removendo...' : 'Remover'}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                {!isSelf && !isDemo && !confirmingUnfriend && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      disabled={actionBusy}
+                      onPress={handleFriendAction}
+                    >
+                      <Text style={styles.actionButtonText}>{friendButtonLabel}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.mutedButton]}
+                      disabled={actionBusy}
+                      onPress={handleToggleBlock}
+                    >
+                      <Text style={styles.mutedButtonText}>{blocked ? 'Desbloquear' : 'Bloquear'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.mutedButton]}
+                      onPress={() => {
+                        setReportMessage(null);
+                        setReportOpen((v) => !v);
+                      }}
+                    >
+                      <Text style={styles.mutedButtonText}>Denunciar</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {actionError ? <Text style={styles.errorTextSmall}>{actionError}</Text> : null}
+
+                {reportOpen && (
+                  <View style={styles.reportBox}>
+                    {REPORT_REASONS.map((reason) => (
+                      <TouchableOpacity key={reason} style={styles.reportChip} onPress={() => handleReport(reason)}>
+                        <Text style={styles.reportChipText}>{reason}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                {reportMessage ? <Text style={styles.reportMessage}>{reportMessage}</Text> : null}
+                {error ? <Text style={styles.errorTextSmall}>{error}</Text> : null}
               </View>
-            </View>
-          )}
+            }
+            center={
+              <>
+                {profile.bio ? (
+                  <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>Sobre</Text>
+                    <Text style={styles.bio}>{profile.bio}</Text>
+                  </View>
+                ) : null}
 
-          {!isSelf && !isDemo && !confirmingUnfriend && (
-            <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.primaryButton} disabled={actionBusy} onPress={handleFriendAction}>
-                <Text style={styles.primaryButtonText}>{friendButtonLabel}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} disabled={actionBusy} onPress={handleToggleBlock}>
-                <Text style={styles.secondaryButtonText}>{blocked ? 'Desbloquear' : 'Bloquear'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() => {
-                  setReportMessage(null);
-                  setReportOpen((v) => !v);
-                }}
-              >
-                <Text style={styles.secondaryButtonText}>Denunciar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+                {!isDemo && currentUserId && (
+                  <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>Recados</Text>
+                    <RecadosSection
+                      profileId={userId}
+                      currentUserId={currentUserId}
+                      recados={recados}
+                      canCompose={!isSelf && relation === 'friends'}
+                      onPosted={(recado) => setRecados((prev) => [recado, ...prev])}
+                      onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}
+                    />
+                  </View>
+                )}
 
-          {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
-
-          {reportOpen && (
-            <View style={styles.reportRow}>
-              {REPORT_REASONS.map((reason) => (
-                <TouchableOpacity key={reason} style={styles.reportChip} onPress={() => handleReport(reason)}>
-                  <Text style={styles.reportChipText}>{reason}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {reportMessage ? <Text style={styles.reportMessage}>{reportMessage}</Text> : null}
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <View style={styles.friendsSection}>
-            <Text style={styles.sectionTitle}>Amigos</Text>
-            <FriendsGrid friends={friends.slice(0, 12)} emptyText="Nenhum amigo ainda." />
-          </View>
-
-          {!isDemo && currentUserId && (
-            <View style={styles.friendsSection}>
-              <Text style={styles.sectionTitle}>Recados</Text>
-              <RecadosSection
-                profileId={userId}
-                currentUserId={currentUserId}
-                recados={recados}
-                canCompose={!isSelf && relation === 'friends'}
-                onPosted={(recado) => setRecados((prev) => [recado, ...prev])}
-                onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}
-              />
-            </View>
-          )}
-
-          <Text style={styles.sectionTitle}>Posts</Text>
-        </View>
-      }
-      renderItem={({ item }) =>
-        currentUserId ? (
-          <PostCard
-            post={item}
-            currentUserId={currentUserId}
-            onDeleted={(postId) => setPosts((prev) => prev.filter((p) => p.id !== postId))}
+                <Text style={styles.postsHeading}>Posts</Text>
+                {posts.length === 0 ? (
+                  <Text style={styles.emptyText}>Nenhum post visível.</Text>
+                ) : (
+                  posts.map((item) =>
+                    currentUserId ? (
+                      <PostCard
+                        key={item.id}
+                        post={item}
+                        currentUserId={currentUserId}
+                        onDeleted={(postId) => setPosts((prev) => prev.filter((p) => p.id !== postId))}
+                      />
+                    ) : null
+                  )
+                )}
+              </>
+            }
+            right={
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Amigos ({friends.length})</Text>
+                <FriendsGrid friends={friends.slice(0, 12)} emptyText="Nenhum amigo ainda." />
+              </View>
+            }
           />
-        ) : null
-      }
-      ListEmptyComponent={
-        <View style={styles.centered}>
-          <Text style={styles.emptyText}>Nenhum post visível.</Text>
-        </View>
-      }
-    />
-    </PageContainer>
+        </PageContainer>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.shell },
+  scroll: { padding: 16, paddingBottom: 32 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: colors.shell },
   errorText: { color: colors.danger, textAlign: 'center', marginTop: 8 },
+  errorTextSmall: { color: colors.danger, textAlign: 'center', marginTop: 10, fontSize: 12 },
   retryText: { color: colors.accent, fontWeight: '600', marginTop: 8 },
-  emptyText: { color: colors.textMuted, textAlign: 'center' },
-  list: { padding: 16, flexGrow: 1, backgroundColor: colors.shell },
-  header: { alignItems: 'center', marginBottom: 20 },
-  avatar: { width: 84, height: 84, borderRadius: 42, marginBottom: 10 },
-  avatarPlaceholder: { backgroundColor: colors.placeholder },
-  displayName: { fontSize: 20, fontWeight: '700', color: colors.text },
-  username: { color: colors.textMuted, marginTop: 2 },
-  stats: { color: colors.textMuted, marginTop: 6, fontSize: 13 },
-  bio: { marginTop: 10, color: colors.text, textAlign: 'center' },
-  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap', justifyContent: 'center' },
-  primaryButton: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 18 },
-  primaryButtonText: { color: colors.onAccent, fontWeight: '600' },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  secondaryButtonText: { color: colors.text, fontWeight: '600' },
-  reportRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, justifyContent: 'center' },
-  reportChip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  reportChipText: { color: colors.text, fontSize: 13 },
-  reportMessage: { color: colors.text, marginTop: 10, textAlign: 'center' },
-  confirmRow: { marginTop: 16, alignItems: 'center' },
-  confirmText: { fontSize: 14, color: colors.text, textAlign: 'center' },
-  confirmButtons: { flexDirection: 'row', gap: 20, marginTop: 10 },
-  confirmCancel: { color: colors.textMuted, fontWeight: '600' },
-  confirmDestructive: { color: colors.danger, fontWeight: '600' },
-  friendsSection: {
-    width: '100%',
-    marginTop: 20,
+  emptyText: { color: colors.textMuted },
+  card: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 16,
   },
-  sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginTop: 20, marginBottom: 10 },
+  avatar: { width: 140, height: 140, borderRadius: 70, alignSelf: 'center', marginBottom: 12 },
+  avatarPlaceholder: { backgroundColor: colors.placeholder },
+  name: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  username: { color: colors.textMuted, textAlign: 'center', marginTop: 2 },
+  statList: { marginTop: 14, gap: 4 },
+  statLine: { fontSize: 13, color: colors.textMuted },
+  statNumber: { color: colors.accent, fontWeight: '700' },
+  actionButton: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  actionButtonText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
+  mutedButton: { borderColor: colors.border },
+  mutedButtonText: { color: colors.text, fontWeight: '600', fontSize: 13 },
+  confirmBox: { marginTop: 14, alignItems: 'center' },
+  confirmText: { fontSize: 13, color: colors.text, textAlign: 'center' },
+  confirmButtons: { flexDirection: 'row', gap: 20, marginTop: 10 },
+  confirmCancel: { color: colors.textMuted, fontWeight: '600' },
+  confirmDestructive: { color: colors.danger, fontWeight: '600' },
+  reportBox: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12, justifyContent: 'center' },
+  reportChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  reportChipText: { color: colors.text, fontSize: 12 },
+  reportMessage: { color: colors.text, marginTop: 10, textAlign: 'center', fontSize: 12 },
   demoNotice: {
     marginTop: 12,
+    alignSelf: 'center',
     backgroundColor: colors.border,
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },
   demoNoticeText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginBottom: 10 },
+  bio: { color: colors.text, fontSize: 14 },
+  postsHeading: { fontWeight: '700', fontSize: 15, color: colors.text, marginBottom: 12, marginTop: 4 },
 });

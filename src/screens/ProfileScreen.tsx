@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Image, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { MainTabParamList, PostFeedItem, Profile, RootStackParamList } from '../types';
+import type { MainTabParamList, PostFeedItem, Profile, RecadoFeedItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useDemo } from '../context/DemoContext';
 import { signOut } from '../services/authService';
@@ -14,9 +14,9 @@ import { DEMO_PROFILES } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
 import PageContainer from '../components/PageContainer';
+import OrkutColumns from '../components/OrkutColumns';
 import RecadosSection from '../components/RecadosSection';
 import { colors } from '../theme/colors';
-import type { RecadoFeedItem } from '../types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Profile'>,
@@ -49,147 +49,151 @@ export default function ProfileScreen({ navigation }: Props) {
     return unsubscribe;
   }, [load, navigation]);
 
+  const memberSince = profile
+    ? new Date(profile.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    : '';
+
   return (
     <View style={styles.container}>
-    <PageContainer maxWidth={640}>
-    <FlatList
-      style={{ flex: 1 }}
-      data={posts}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.list}
-      ListHeaderComponent={
-        <View>
-          <View style={styles.banner} />
-          <View style={styles.header}>
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]} />
-            )}
-            <Text style={styles.title}>{profile?.display_name ?? 'Perfil'}</Text>
-            <Text style={styles.subtitle}>@{profile?.username}</Text>
-            <Text style={styles.stats}>
-              {friends.length} amigos · {posts.length} posts
-              {profile ? ` · Desde ${new Date(profile.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}` : ''}
-            </Text>
-            {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Groups')}>
-              <Text style={styles.secondaryButtonText}>Meus grupos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => signOut()}>
-              <Text style={styles.buttonText}>Sair</Text>
-            </TouchableOpacity>
-          </View>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <PageContainer maxWidth={1000}>
+          <OrkutColumns
+            left={
+              <View style={styles.card}>
+                {profile?.avatar_url ? (
+                  <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]} />
+                )}
+                <Text style={styles.name}>{profile?.display_name ?? 'Perfil'}</Text>
+                <Text style={styles.username}>@{profile?.username}</Text>
 
-          <View style={styles.friendsSection}>
-            <Text style={styles.sectionTitle}>Amigos</Text>
-            <FriendsGrid
-              friends={displayedFriends.slice(0, 12)}
-              emptyText="Você ainda não tem amigos por aqui."
-              onSeeAll={() => navigation.navigate('Friends')}
-            />
-          </View>
+                <View style={styles.statList}>
+                  <Text style={styles.statLine}>
+                    <Text style={styles.statNumber}>{friends.length}</Text> amigos
+                  </Text>
+                  <Text style={styles.statLine}>
+                    <Text style={styles.statNumber}>{posts.length}</Text> posts
+                  </Text>
+                  <Text style={styles.statLine}>Desde {memberSince}</Text>
+                </View>
 
-          <View style={styles.demoRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.demoTitle}>Modo demonstração</Text>
-              <Text style={styles.demoSubtitle}>
-                Mostra 5 amigos e posts de exemplo no feed e no seu perfil, só para você visualizar. Não é
-                salvo em lugar nenhum.
-              </Text>
-            </View>
-            <Switch
-              value={demoMode}
-              onValueChange={setDemoMode}
-              trackColor={{ true: colors.accent, false: colors.border }}
-            />
-          </View>
+                <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Groups')}>
+                  <Text style={styles.actionButtonText}>Meus grupos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Friends')}>
+                  <Text style={styles.actionButtonText}>Amigos e pedidos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionButton, styles.signOutButton]} onPress={() => signOut()}>
+                  <Text style={styles.signOutButtonText}>Sair</Text>
+                </TouchableOpacity>
 
-          <View style={styles.recadosSection}>
-            <Text style={styles.sectionTitle}>Recados</Text>
-            {session?.user ? (
-              <RecadosSection
-                profileId={session.user.id}
-                currentUserId={session.user.id}
-                recados={recados}
-                canCompose={false}
-                onPosted={() => {}}
-                onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}
-              />
-            ) : null}
-          </View>
+                <View style={styles.demoRow}>
+                  <Text style={styles.demoLabel}>Modo demonstração</Text>
+                  <Switch
+                    value={demoMode}
+                    onValueChange={setDemoMode}
+                    trackColor={{ true: colors.accent, false: colors.border }}
+                  />
+                </View>
+              </View>
+            }
+            center={
+              <>
+                {profile?.bio ? (
+                  <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>Sobre</Text>
+                    <Text style={styles.bio}>{profile.bio}</Text>
+                  </View>
+                ) : null}
 
-          <Text style={styles.sectionTitle}>Meus posts</Text>
-        </View>
-      }
-      renderItem={({ item }) =>
-        session?.user ? (
-          <PostCard
-            post={item}
-            currentUserId={session.user.id}
-            onDeleted={(postId) => setPosts((prev) => prev.filter((p) => p.id !== postId))}
+                <View style={styles.card}>
+                  <Text style={styles.sectionTitle}>Recados</Text>
+                  {session?.user ? (
+                    <RecadosSection
+                      profileId={session.user.id}
+                      currentUserId={session.user.id}
+                      recados={recados}
+                      canCompose={false}
+                      onPosted={() => {}}
+                      onDeleted={(id) => setRecados((prev) => prev.filter((r) => r.id !== id))}
+                    />
+                  ) : null}
+                </View>
+
+                <Text style={styles.postsHeading}>Meus posts</Text>
+                {posts.length === 0 ? (
+                  <Text style={styles.emptyText}>Você ainda não postou nada.</Text>
+                ) : (
+                  posts.map((item) =>
+                    session?.user ? (
+                      <PostCard
+                        key={item.id}
+                        post={item}
+                        currentUserId={session.user.id}
+                        onDeleted={(postId) => setPosts((prev) => prev.filter((p) => p.id !== postId))}
+                      />
+                    ) : null
+                  )
+                )}
+              </>
+            }
+            right={
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Amigos ({displayedFriends.length})</Text>
+                <FriendsGrid
+                  friends={displayedFriends.slice(0, 12)}
+                  emptyText="Você ainda não tem amigos por aqui."
+                  onSeeAll={() => navigation.navigate('Friends')}
+                />
+              </View>
+            }
           />
-        ) : null
-      }
-    />
-    </PageContainer>
+        </PageContainer>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.shell },
-  list: { paddingBottom: 16, flexGrow: 1 },
-  banner: { height: 90, backgroundColor: colors.accentSoft },
-  header: { alignItems: 'center', marginTop: -42, paddingHorizontal: 16 },
-  avatar: { width: 84, height: 84, borderRadius: 42, marginBottom: 10, borderWidth: 3, borderColor: colors.shell },
-  avatarPlaceholder: { backgroundColor: colors.placeholder },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  subtitle: { color: colors.textMuted, marginTop: 4 },
-  stats: { color: colors.textMuted, marginTop: 6, fontSize: 13 },
-  bio: { marginTop: 10, color: colors.text, textAlign: 'center' },
-  secondaryButton: {
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  secondaryButtonText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
-  button: {
-    marginTop: 12,
-    backgroundColor: colors.accent,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-  },
-  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '600' },
-  friendsSection: {
-    marginTop: 24,
-    marginHorizontal: 16,
+  scroll: { padding: 16, paddingBottom: 32 },
+  card: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 16,
   },
-  sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginBottom: 10, marginHorizontal: 16 },
+  avatar: { width: 140, height: 140, borderRadius: 70, alignSelf: 'center', marginBottom: 12 },
+  avatarPlaceholder: { backgroundColor: colors.placeholder },
+  name: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  username: { color: colors.textMuted, textAlign: 'center', marginTop: 2 },
+  statList: { marginTop: 14, gap: 4 },
+  statLine: { fontSize: 13, color: colors.textMuted },
+  statNumber: { color: colors.accent, fontWeight: '700' },
+  actionButton: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  actionButtonText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
+  signOutButton: { borderColor: colors.border },
+  signOutButtonText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
   demoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 20,
-    marginHorizontal: 16,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  demoTitle: { fontWeight: '700', fontSize: 14, color: colors.text },
-  demoSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
-  recadosSection: {
-    marginTop: 20,
-    marginHorizontal: 16,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-  },
+  demoLabel: { fontSize: 12, color: colors.textMuted, flex: 1, marginRight: 8 },
+  sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginBottom: 10 },
+  bio: { color: colors.text, fontSize: 14 },
+  postsHeading: { fontWeight: '700', fontSize: 15, color: colors.text, marginBottom: 12, marginTop: 4 },
+  emptyText: { color: colors.textMuted },
 });

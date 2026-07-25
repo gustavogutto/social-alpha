@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList, StoryGroup } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createStory, fetchActiveStories } from '../services/storyService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
@@ -86,6 +87,8 @@ export default function StoriesScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.shell }}>
+    <PageContainer maxWidth={640}>
+    <View style={{ flex: 1 }}>
       <ScrollView horizontal contentContainerStyle={styles.row} showsHorizontalScrollIndicator={false}>
         <TouchableOpacity style={styles.bubbleWrap} onPress={handleAddStory} disabled={posting}>
           <View style={styles.addBubble}>
@@ -144,6 +147,8 @@ export default function StoriesScreen({ navigation }: Props) {
           </View>
         )
       )}
+    </View>
+    </PageContainer>
     </View>
   );
 }

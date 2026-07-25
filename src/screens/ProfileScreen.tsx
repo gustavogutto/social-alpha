@@ -1,15 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, PostFeedItem, Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useDemo } from '../context/DemoContext';
 import { signOut } from '../services/authService';
 import { fetchPostsByAuthor } from '../services/profileService';
 import { fetchFriends } from '../services/friendService';
+import { DEMO_PROFILES } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
@@ -19,8 +22,10 @@ type Props = CompositeScreenProps<
 
 export default function ProfileScreen({ navigation }: Props) {
   const { profile, session } = useAuth();
+  const { demoMode, setDemoMode } = useDemo();
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
   const [friends, setFriends] = useState<Profile[]>([]);
+  const displayedFriends = demoMode ? [...friends, ...DEMO_PROFILES] : friends;
 
   const load = useCallback(async () => {
     if (!session?.user) return;
@@ -39,8 +44,10 @@ export default function ProfileScreen({ navigation }: Props) {
   }, [load, navigation]);
 
   return (
+    <View style={styles.container}>
+    <PageContainer maxWidth={640}>
     <FlatList
-      style={styles.container}
+      style={{ flex: 1 }}
       data={posts}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
@@ -67,9 +74,24 @@ export default function ProfileScreen({ navigation }: Props) {
           <View style={styles.friendsSection}>
             <Text style={styles.sectionTitle}>Amigos</Text>
             <FriendsGrid
-              friends={friends.slice(0, 12)}
+              friends={displayedFriends.slice(0, 12)}
               emptyText="Você ainda não tem amigos por aqui."
               onSeeAll={() => navigation.navigate('Friends')}
+            />
+          </View>
+
+          <View style={styles.demoRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.demoTitle}>Modo demonstração</Text>
+              <Text style={styles.demoSubtitle}>
+                Mostra 5 amigos e posts de exemplo no feed e no seu perfil, só para você visualizar. Não é
+                salvo em lugar nenhum.
+              </Text>
+            </View>
+            <Switch
+              value={demoMode}
+              onValueChange={setDemoMode}
+              trackColor={{ true: colors.accent, false: colors.border }}
             />
           </View>
 
@@ -86,6 +108,8 @@ export default function ProfileScreen({ navigation }: Props) {
         ) : null
       }
     />
+    </PageContainer>
+    </View>
   );
 }
 
@@ -124,4 +148,16 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginBottom: 10, marginHorizontal: 16 },
+  demoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 20,
+    marginHorizontal: 16,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+  },
+  demoTitle: { fontWeight: '700', fontSize: 14, color: colors.text },
+  demoSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
 });

@@ -66,7 +66,15 @@ export default function LoginScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.shell },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: colors.shell,
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
+  },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center', color: colors.text },
   input: {
     borderWidth: 1,

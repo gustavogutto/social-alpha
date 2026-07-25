@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList, Group } from '../types';
 import { fetchMyGroups } from '../services/groupService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Groups'>;
@@ -30,37 +31,44 @@ export default function GroupsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={groups}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.groupRow}>
-            <Text style={styles.groupName}>{item.name}</Text>
-          </View>
-        )}
-        ListEmptyComponent={
-          loading ? null : error ? (
-            <View style={styles.centered}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={reload}>
-                <Text style={styles.retryText}>Tentar novamente</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <Text style={styles.emptyText}>Você ainda não faz parte de nenhum grupo.</Text>
-          )
-        }
-      />
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('CreateGroup')}>
-        <Text style={styles.buttonText}>+ Criar grupo</Text>
-      </TouchableOpacity>
+      <PageContainer maxWidth={480}>
+        <View style={styles.content}>
+          <FlatList
+            style={styles.flatList}
+            data={groups}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <View style={styles.groupRow}>
+                <Text style={styles.groupName}>{item.name}</Text>
+              </View>
+            )}
+            ListEmptyComponent={
+              loading ? null : error ? (
+                <View style={styles.centered}>
+                  <Text style={styles.errorText}>{error}</Text>
+                  <TouchableOpacity onPress={reload}>
+                    <Text style={styles.retryText}>Tentar novamente</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>Você ainda não faz parte de nenhum grupo.</Text>
+              )
+            }
+          />
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('CreateGroup')}>
+            <Text style={styles.buttonText}>+ Criar grupo</Text>
+          </TouchableOpacity>
+        </View>
+      </PageContainer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.shell, padding: 16 },
+  container: { flex: 1, backgroundColor: colors.shell },
+  content: { flex: 1, padding: 16 },
+  flatList: { flex: 1 },
   centered: { alignItems: 'center', justifyContent: 'center', marginTop: 32 },
   errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
   retryText: { color: colors.accent, fontWeight: '600' },

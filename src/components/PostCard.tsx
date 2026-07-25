@@ -22,6 +22,7 @@ export default function PostCard({
   onDeleted?: (postId: string) => void;
 }) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const isDemo = post.id.startsWith('demo-');
   const [liked, setLikedState] = useState(post.liked_by_me);
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -45,6 +46,7 @@ export default function PostCard({
     const next = !liked;
     setLikedState(next);
     setLikeCount((c) => c + (next ? 1 : -1));
+    if (isDemo) return;
     try {
       await setLiked(post.id, currentUserId, next);
     } catch {
@@ -56,7 +58,7 @@ export default function PostCard({
   async function handleToggleComments() {
     const next = !commentsOpen;
     setCommentsOpen(next);
-    if (next && comments.length === 0) {
+    if (next && comments.length === 0 && !isDemo) {
       setLoadingComments(true);
       try {
         setComments(await fetchComments(post.id));
@@ -69,6 +71,15 @@ export default function PostCard({
   async function handleAddComment() {
     const text = newComment.trim();
     if (!text) return;
+    if (isDemo) {
+      setComments((prev) => [
+        ...prev,
+        { id: `demo-comment-${Date.now()}`, post_id: post.id, author_id: currentUserId, content: text, created_at: new Date().toISOString() },
+      ]);
+      setCommentCount((c) => c + 1);
+      setNewComment('');
+      return;
+    }
     setCommentError(null);
     setSendingComment(true);
     try {
@@ -114,7 +125,11 @@ export default function PostCard({
             <Text style={styles.timestamp}>{new Date(post.created_at).toLocaleString()}</Text>
           </View>
         </TouchableOpacity>
-        {post.group_name ? (
+        {isDemo ? (
+          <View style={styles.demoBadge}>
+            <Text style={styles.demoBadgeText}>Exemplo</Text>
+          </View>
+        ) : post.group_name ? (
           <View style={styles.groupBadge}>
             <Text style={styles.groupBadgeText}>{post.group_name}</Text>
           </View>
@@ -217,6 +232,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   groupBadgeText: { fontSize: 12, color: colors.accent, fontWeight: '600' },
+  demoBadge: {
+    marginLeft: 'auto',
+    backgroundColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  demoBadgeText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
   deleteButton: { paddingHorizontal: 8, paddingVertical: 4, marginLeft: 8 },
   deleteButtonText: { color: colors.textMuted, fontSize: 16, fontWeight: '700' },
   confirmRow: { paddingVertical: 4 },

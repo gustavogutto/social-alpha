@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createGroup, fetchOtherProfiles } from '../services/groupService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateGroup'>;
@@ -57,6 +58,8 @@ export default function CreateGroupScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+    <PageContainer maxWidth={480}>
+    <View style={styles.content}>
       <TextInput
         style={styles.input}
         placeholder="Nome do grupo"
@@ -65,6 +68,7 @@ export default function CreateGroupScreen({ navigation }: Props) {
       />
       <Text style={styles.sectionLabel}>Adicionar membros</Text>
       <FlatList
+        style={styles.flatList}
         data={profiles}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
@@ -87,11 +91,15 @@ export default function CreateGroupScreen({ navigation }: Props) {
         <Text style={styles.buttonText}>{submitting ? 'Criando...' : 'Criar grupo'}</Text>
       </TouchableOpacity>
     </View>
+    </PageContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.shell, padding: 16 },
+  container: { flex: 1, backgroundColor: colors.shell },
+  content: { flex: 1, padding: 16 },
+  flatList: { flex: 1 },
   input: {
     borderWidth: 1,
     borderColor: colors.border,

@@ -20,31 +20,40 @@ import ChatScreen from '../screens/ChatScreen';
 import NewConversationScreen from '../screens/NewConversationScreen';
 import FriendsScreen from '../screens/FriendsScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
+import TopNavBar from '../components/TopNavBar';
 import { colors } from '../theme/colors';
+import { useIsWideScreen } from '../theme/responsive';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
+  const isWide = useIsWideScreen();
+
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
-      }}
-    >
-      <Tab.Screen name="Feed" component={FeedScreen} />
-      <Tab.Screen name="Stories" component={StoriesScreen} />
-      <Tab.Screen name="Messages" component={MessagesScreen} options={{ title: 'Mensagens' }} />
-      <Tab.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ title: 'Notificações' }}
-      />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
-    </Tab.Navigator>
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
+      {isWide ? <TopNavBar /> : null}
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.textMuted,
+          tabBarStyle: isWide
+            ? { display: 'none' }
+            : { backgroundColor: colors.card, borderTopColor: colors.border },
+        }}
+      >
+        <Tab.Screen name="Feed" component={FeedScreen} />
+        <Tab.Screen name="Stories" component={StoriesScreen} />
+        <Tab.Screen name="Messages" component={MessagesScreen} options={{ title: 'Mensagens' }} />
+        <Tab.Screen
+          name="Notifications"
+          component={NotificationsScreen}
+          options={{ title: 'Notificações' }}
+        />
+        <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
+      </Tab.Navigator>
+    </View>
   );
 }
 

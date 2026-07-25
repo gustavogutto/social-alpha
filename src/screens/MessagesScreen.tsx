@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ConversationWithParticipants, MainTabParamList, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchConversations } from '../services/messageService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
@@ -51,42 +52,45 @@ export default function MessagesScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.shell }}>
-      <FlatList
-        data={conversations}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() =>
-              navigation.navigate('Chat', { conversationId: item.id, title: conversationTitle(item) })
-            }
-          >
-            <Text style={styles.title}>{conversationTitle(item)}</Text>
-            {item.last_message ? (
-              <Text style={styles.preview} numberOfLines={1}>
-                {item.last_message}
-              </Text>
+      <PageContainer>
+        <FlatList
+          style={styles.flatList}
+          data={conversations}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() =>
+                navigation.navigate('Chat', { conversationId: item.id, title: conversationTitle(item) })
+              }
+            >
+              <Text style={styles.title}>{conversationTitle(item)}</Text>
+              {item.last_message ? (
+                <Text style={styles.preview} numberOfLines={1}>
+                  {item.last_message}
+                </Text>
+              ) : (
+                <Text style={styles.previewEmpty}>Nenhuma mensagem ainda</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            error ? (
+              <View style={styles.centered}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity onPress={reload}>
+                  <Text style={styles.retryText}>Tentar novamente</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
-              <Text style={styles.previewEmpty}>Nenhuma mensagem ainda</Text>
-            )}
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          error ? (
-            <View style={styles.centered}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={reload}>
-                <Text style={styles.retryText}>Tentar novamente</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.centered}>
-              <Text style={styles.emptyText}>Nenhuma conversa ainda.</Text>
-            </View>
-          )
-        }
-      />
+              <View style={styles.centered}>
+                <Text style={styles.emptyText}>Nenhuma conversa ainda.</Text>
+              </View>
+            )
+          }
+        />
+      </PageContainer>
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('NewConversation')}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -99,6 +103,7 @@ const styles = StyleSheet.create({
   emptyText: { color: colors.textMuted, textAlign: 'center' },
   errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
   retryText: { color: colors.accent, fontWeight: '600' },
+  flatList: { flex: 1 },
   list: { flexGrow: 1, padding: 12 },
   row: {
     backgroundColor: colors.card,

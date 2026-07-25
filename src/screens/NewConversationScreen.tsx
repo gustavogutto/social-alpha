@@ -5,6 +5,7 @@ import type { Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchOtherProfiles } from '../services/groupService';
 import { createGroupConversation, findOrCreateDirectConversation } from '../services/messageService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewConversation'>;
@@ -68,7 +69,10 @@ export default function NewConversationScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+    <PageContainer maxWidth={480}>
+    <View style={styles.content}>
       <FlatList
+        style={styles.flatList}
         data={profiles}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
@@ -99,11 +103,15 @@ export default function NewConversationScreen({ navigation }: Props) {
         <Text style={styles.buttonText}>{submitting ? 'Iniciando...' : 'Iniciar conversa'}</Text>
       </TouchableOpacity>
     </View>
+    </PageContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.shell, padding: 16 },
+  container: { flex: 1, backgroundColor: colors.shell },
+  content: { flex: 1, padding: 16 },
+  flatList: { flex: 1 },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',

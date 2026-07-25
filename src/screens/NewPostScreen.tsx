@@ -14,6 +14,7 @@ import type { Group, PostVisibility, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { createPost } from '../services/postService';
 import { fetchMyGroups } from '../services/groupService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewPost'>;
@@ -75,7 +76,9 @@ export default function NewPostScreen({ navigation }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
+    <PageContainer maxWidth={560}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="No que você está pensando?"
@@ -133,6 +136,8 @@ export default function NewPostScreen({ navigation }: Props) {
         <Text style={styles.buttonText}>{submitting ? 'Publicando...' : 'Publicar'}</Text>
       </TouchableOpacity>
     </ScrollView>
+    </PageContainer>
+    </View>
   );
 }
 

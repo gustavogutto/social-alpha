@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, NotificationFeedItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchNotifications, markAllAsRead, markAsRead, subscribeToNotifications } from '../services/notificationService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = CompositeScreenProps<
@@ -91,39 +92,44 @@ export default function NotificationsScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.shell }}>
-      {items.some((i) => !i.read) && (
-        <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
-          <Text style={styles.markAllText}>Marcar tudo como lido</Text>
-        </TouchableOpacity>
-      )}
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.row, !item.read && styles.rowUnread]}
-            onPress={() => handlePress(item)}
-          >
-            <Text style={styles.text}>{describe(item)}</Text>
-            <Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          error ? (
-            <View style={styles.centered}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={reload}>
-                <Text style={styles.retryText}>Tentar novamente</Text>
+      <PageContainer>
+        <View style={{ flex: 1 }}>
+          {items.some((i) => !i.read) && (
+            <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
+              <Text style={styles.markAllText}>Marcar tudo como lido</Text>
+            </TouchableOpacity>
+          )}
+          <FlatList
+            style={styles.flatList}
+            data={items}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.row, !item.read && styles.rowUnread]}
+                onPress={() => handlePress(item)}
+              >
+                <Text style={styles.text}>{describe(item)}</Text>
+                <Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text>
               </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.centered}>
-              <Text style={styles.emptyText}>Nenhuma notificação ainda.</Text>
-            </View>
-          )
-        }
-      />
+            )}
+            ListEmptyComponent={
+              error ? (
+                <View style={styles.centered}>
+                  <Text style={styles.errorText}>{error}</Text>
+                  <TouchableOpacity onPress={reload}>
+                    <Text style={styles.retryText}>Tentar novamente</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.centered}>
+                  <Text style={styles.emptyText}>Nenhuma notificação ainda.</Text>
+                </View>
+              )
+            }
+          />
+        </View>
+      </PageContainer>
     </View>
   );
 }
@@ -133,6 +139,7 @@ const styles = StyleSheet.create({
   emptyText: { color: colors.textMuted, textAlign: 'center' },
   errorText: { color: colors.danger, textAlign: 'center', marginBottom: 10 },
   retryText: { color: colors.accent, fontWeight: '600' },
+  flatList: { flex: 1 },
   list: { flexGrow: 1, padding: 12 },
   markAllButton: { alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 12 },
   markAllText: { color: colors.accent, fontWeight: '600' },

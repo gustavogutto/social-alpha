@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Message, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchMessages, sendMessage, subscribeToMessages } from '../services/messageService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
@@ -67,40 +68,45 @@ export default function ChatScreen({ route, navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
-      {loadError ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorBannerText}>{loadError}</Text>
-        </View>
-      ) : null}
-      <FlatList
-        ref={listRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-        renderItem={({ item }) => {
-          const mine = item.sender_id === session?.user?.id;
-          return (
-            <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
-              <Text style={mine ? styles.bubbleTextMine : styles.bubbleText}>{item.content}</Text>
+      <PageContainer maxWidth={640}>
+        <View style={{ flex: 1 }}>
+          {loadError ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{loadError}</Text>
             </View>
-          );
-        }}
-      />
-      {sendError ? <Text style={styles.sendErrorText}>{sendError}</Text> : null}
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Escreva uma mensagem..."
-          value={text}
-          onChangeText={setText}
-          onSubmitEditing={handleSend}
-          editable={!sending}
-        />
-        <TouchableOpacity onPress={handleSend} style={styles.sendButton} disabled={sending}>
-          <Text style={styles.sendButtonText}>{sending ? '...' : 'Enviar'}</Text>
-        </TouchableOpacity>
-      </View>
+          ) : null}
+          <FlatList
+            ref={listRef}
+            style={{ flex: 1 }}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            renderItem={({ item }) => {
+              const mine = item.sender_id === session?.user?.id;
+              return (
+                <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
+                  <Text style={mine ? styles.bubbleTextMine : styles.bubbleText}>{item.content}</Text>
+                </View>
+              );
+            }}
+          />
+          {sendError ? <Text style={styles.sendErrorText}>{sendError}</Text> : null}
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Escreva uma mensagem..."
+              value={text}
+              onChangeText={setText}
+              onSubmitEditing={handleSend}
+              editable={!sending}
+            />
+            <TouchableOpacity onPress={handleSend} style={styles.sendButton} disabled={sending}>
+              <Text style={styles.sendButtonText}>{sending ? '...' : 'Enviar'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </PageContainer>
     </KeyboardAvoidingView>
   );
 }

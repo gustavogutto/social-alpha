@@ -13,8 +13,10 @@ import {
 } from '../services/friendService';
 import { blockUser, isBlockedByMe, unblockUser } from '../services/blockService';
 import { submitReport } from '../services/reportService';
+import { DEMO_POSTS, DEMO_PROFILES } from '../demo/demoData';
 import PostCard from '../components/PostCard';
 import FriendsGrid from '../components/FriendsGrid';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
@@ -32,6 +34,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const currentUserId = session?.user?.id;
   const isSelf = currentUserId === userId;
+  const isDemo = userId.startsWith('demo-');
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
@@ -47,6 +50,16 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [reportMessage, setReportMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (isDemo) {
+      const demoProfile = DEMO_PROFILES.find((p) => p.id === userId);
+      if (!demoProfile) throw new Error('Perfil de exemplo não encontrado.');
+      setProfile(demoProfile);
+      setPosts(DEMO_POSTS.filter((p) => p.author_id === userId));
+      setFriends(DEMO_PROFILES.filter((p) => p.id !== userId));
+      navigation.setOptions({ title: demoProfile.display_name });
+      return;
+    }
+
     const [profileData, postsData, friendsData] = await Promise.all([
       fetchProfile(userId),
       fetchPostsByAuthor(userId),
@@ -65,7 +78,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       setFriendship(friendshipData);
       setBlocked(blockedData);
     }
-  }, [userId, isSelf, currentUserId, navigation]);
+  }, [userId, isSelf, isDemo, currentUserId, navigation]);
 
   const reload = useCallback(() => {
     return load()
@@ -180,7 +193,10 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           : 'Amigos';
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.shell }}>
+    <PageContainer maxWidth={640}>
     <FlatList
+      style={{ flex: 1 }}
       data={posts}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
@@ -195,7 +211,13 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           <Text style={styles.username}>@{profile.username}</Text>
           {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
-          {!isSelf && confirmingUnfriend && (
+          {isDemo && (
+            <View style={styles.demoNotice}>
+              <Text style={styles.demoNoticeText}>Perfil de exemplo (modo demonstração)</Text>
+            </View>
+          )}
+
+          {!isSelf && !isDemo && confirmingUnfriend && (
             <View style={styles.confirmRow}>
               <Text style={styles.confirmText}>Remover {profile.display_name} dos seus amigos?</Text>
               <View style={styles.confirmButtons}>
@@ -209,7 +231,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             </View>
           )}
 
-          {!isSelf && !confirmingUnfriend && (
+          {!isSelf && !isDemo && !confirmingUnfriend && (
             <View style={styles.actionsRow}>
               <TouchableOpacity style={styles.primaryButton} disabled={actionBusy} onPress={handleFriendAction}>
                 <Text style={styles.primaryButtonText}>{friendButtonLabel}</Text>
@@ -267,6 +289,8 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         </View>
       }
     />
+    </PageContainer>
+    </View>
   );
 }
 
@@ -316,4 +340,12 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   sectionTitle: { fontWeight: '700', fontSize: 15, color: colors.text, marginTop: 20, marginBottom: 10 },
+  demoNotice: {
+    marginTop: 12,
+    backgroundColor: colors.border,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+  },
+  demoNoticeText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
 });

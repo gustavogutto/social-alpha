@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { Friendship, Profile, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { fetchFriends, fetchPendingRequests, fetchSentRequests, removeFriendship, respondToFriendRequest } from '../services/friendService';
+import PageContainer from '../components/PageContainer';
 import { colors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Friends'>;
@@ -82,7 +83,9 @@ export default function FriendsScreen({ navigation }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
+    <PageContainer maxWidth={480}>
+    <ScrollView contentContainerStyle={styles.content}>
       {error ? (
         <View style={styles.centered}>
           <Text style={styles.errorText}>{error}</Text>
@@ -183,6 +186,8 @@ export default function FriendsScreen({ navigation }: Props) {
         </>
       )}
     </ScrollView>
+    </PageContainer>
+    </View>
   );
 }
 

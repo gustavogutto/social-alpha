@@ -156,12 +156,17 @@ export default function FeedScreen({ navigation }: Props) {
     setPosts(data);
   }, []);
 
-  useEffect(() => {
-    load()
+  const reload = useCallback(() => {
+    return load()
       .then(() => setError(null))
-      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar o feed.'))
-      .finally(() => setLoading(false));
+      .catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível carregar o feed.'));
   }, [load]);
+
+  useEffect(() => {
+    reload().finally(() => setLoading(false));
+    const unsubscribe = navigation.addListener('focus', reload);
+    return unsubscribe;
+  }, [reload, navigation]);
 
   async function handleRefresh() {
     setRefreshing(true);
